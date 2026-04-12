@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Find Your Time — Connexion</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0800;
+      --bg-card: #0f0c00;
+      --bg-input: #1a1400;
+      --gold: #ffd700;
+      --gold-2: #c89600;
+      --gold-muted: #806030;
+      --gold-dark: #604820;
+      --text: #e8d080;
+      --border: rgba(200,150,0,0.18);
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #0a0800 0%, #110e00 60%, #0d0a00 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      color: var(--text);
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    /* Particules */
+    .particles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .particle {
+      position: absolute; bottom: -10px; border-radius: 50%;
+      background: var(--gold); opacity: 0.25;
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0) scale(1); opacity: 0.25; }
+      100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+    }
+
+    /* Card */
+    .card {
+      position: relative; z-index: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px 32px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 0 80px rgba(200,150,0,0.06);
+      animation: fadeUp 0.6s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Logo */
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px;
+    }
+    .logo-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 0 24px rgba(255,215,0,0.25);
+    }
+    .logo-text h1 {
+      font-size: 20px; font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1.1;
+    }
+    .logo-text p {
+      font-size: 11px; color: var(--gold-dark);
+      font-family: 'DM Mono', monospace; letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex; background: var(--bg);
+      border-radius: 12px; padding: 4px;
+      margin-bottom: 28px;
+      border: 1px solid var(--border);
+    }
+    .tab {
+      flex: 1; padding: 10px;
+      border: none; background: transparent;
+      color: var(--gold-muted); font-size: 13px;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600; cursor: pointer;
+      border-radius: 9px; transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .tab.active {
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      color: #0a0800;
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 16px; }
+    label {
+      display: block; font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      color: var(--gold-muted); letter-spacing: 2px;
+      margin-bottom: 7px;
+    }
+    input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-size: 14px;
+      font-family: 'Cormorant Garamond', serif;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: rgba(200,150,0,0.5); }
+    input::placeholder { color: var(--gold-dark); }
+
+    /* Profile type selector */
+    .profile-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 8px; margin-top: 4px;
+    }
+    .profile-opt {
+      padding: 10px 6px; text-align: center;
+      background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 10px; cursor: pointer;
+      transition: all 0.2s; font-size: 12px; color: var(--gold-muted);
+      font-family: 'Cormorant Garamond', serif;
+    }
+    .profile-opt .icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    .profile-opt.selected {
+      background: rgba(200,150,0,0.12);
+      border-color: rgba(200,150,0,0.5);
+      color: var(--gold);
+    }
+
+    /* Button */
+    .btn-primary {
+      width: 100%; margin-top: 8px;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      border: none; border-radius: 12px;
+      color: #0a0800; font-size: 14px;
+      font-weight: 700; font-family: 'Cormorant Garamond', serif;
+      letter-spacing: 1px; cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 6px 24px rgba(255,215,0,0.15);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 32px rgba(255,215,0,0.25); }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 20px 0; color: var(--gold-dark);
+      font-size: 11px; font-family: 'DM Mono', monospace;
+    }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border);
+    }
+
+    /* Google btn */
+    .btn-google {
+      width: 100%; padding: 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 12px; color: var(--gold-muted);
+      font-size: 13px; font-family: 'Cormorant Garamond', serif;
+      cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-google:hover { border-color: rgba(200,150,0,0.4); color: var(--text); }
+
+    /* Footer */
+    .card-footer {
+      margin-top: 20px; text-align: center;
+      font-size: 12px; color: var(--gold-dark);
+    }
+    .card-footer a { color: var(--gold-muted); cursor: pointer; text-decoration: underline; }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 32px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--bg-card); border: 1px solid rgba(74,150,96,0.4);
+      border-radius: 12px; padding: 12px 20px;
+      color: #7dc98a; font-size: 13px;
+      font-family: 'DM Mono', monospace;
+      transition: transform 0.3s ease;
+      z-index: 100; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Hidden */
+    .hidden { display: none; }
+
+    /* Error */
+    .error-msg {
+      font-size: 11px; color: #c84040;
+      font-family: 'DM Mono', monospace;
+      margin-top: 6px; letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Particules dorées -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Card principale -->
+  <div class="card">
+
+    <!-- Logo -->
+    <div class="logo">
+      <div class="logo-icon">⏳</div>
+      <div class="logo-text">
+        <h1>Find Your Time</h1>
+        <p>MAÎTRISER SON TEMPS</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Connexion</button>
+      <button class="tab" onclick="switchTab('signup')">Inscription</button>
+    </div>
+
+    <!-- FORMULAIRE CONNEXION -->
+    <div id="form-login">
+      <div class="form-group">
+        <label>EMAIL</label>
+        <input type="email" id="login-email" placeholder="ton@email.com" />
+      </div>
+      <div class="form-group">
+        <label>MOT DE PASSE</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+        <div class="error-msg hidden" id="login-error">Email ou mot de passe incorrect.</div>
+      </div>
+      <button class="btn-primary" onclick="handleLogin()">Connexion →</button>
+      <div class="divider">ou</div>
+      <button class="btn-google" onclick="googleLogin()">
+        <span>🌐</span> Continuer avec Google
+      </button>
+      <div class="card-footer">
+        <a onclick="forgotPassword()">Mot de passe oublié ?</a>
+      </div>
+    </div>
+
+    <!-- FORMULAIRE INSCRIPTION -->
+    <div id="form-signup" class="hidden">
+      <div class="form-group">
+        <label>TON PRÉNOM</label>
+        <input type="text" id="signup-name" placeholder="Ex: Erwan" />
+      </div>
+      <div class="form-group">
+        <label>EMAIL</label>
+        <input type="email" id="signup-email" placeholder="ton@email.com" />
+      </div>
+      <div class="form-group">
+        <label>MOT DE PASSE</label>
+        <input type="password" id="signup-password" placeholder="8 caractères minimum" />
+      </div>
+      <div class="form-group">
+        <label>TU ES PLUTÔT ?</label>
+        <div class="profile-grid">
+          <div class="profile-opt" onclick="selectProfile(this, 'lyceen')">
+            <span class="icon">📚</span> Lycéen
+          </div>
+          <div class="profile-opt" onclick="selectProfile(this, 'etudiant')">
+            <span class="icon">🎓</span> Étudiant
+          </div>
+          <div class="profile-opt" onclick="selectProfile(this, 'actif')">
+            <span class="icon">💼</span> Actif
+          </div>
+        </div>
+        <div class="error-msg hidden" id="signup-error">Remplis tous les champs.</div>
+      </div>
+      <button class="btn-primary" onclick="handleSignup()">Créer mon compte →</button>
+      <div class="divider">ou</div>
+      <button class="btn-google" onclick="googleLogin()">
+        <span>🌐</span> Continuer avec Google
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── Particules ──────────────────────────────────────────────
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      const size = 1 + Math.random() * 2.5;
+      p.style.cssText = `
+        left: ${Math.random() * 100}%;
+        width: ${size}px; height: ${size}px;
+        animation-duration: ${6 + Math.random() * 10}s;
+        animation-delay: ${Math.random() * 8}s;
+      `;
+      container.appendChild(p);
+    }
+
+    // ── État local ───────────────────────────────────────────────
+    let selectedProfile = null;
+    let currentTab = 'login';
+
+    // ── Onglets ──────────────────────────────────────────────────
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
+      });
+      document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
+      document.getElementById('form-signup').classList.toggle('hidden', tab !== 'signup');
+    }
+
+    // ── Sélection profil ─────────────────────────────────────────
+    function selectProfile(el, type) {
+      document.querySelectorAll('.profile-opt').forEach(o => o.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedProfile = type;
+    }
+
+    // ── Toast ────────────────────────────────────────────────────
+    function showToast(msg, success = true) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.borderColor = success ? 'rgba(74,150,96,0.4)' : 'rgba(200,64,0,0.4)';
+      t.style.color = success ? '#7dc98a' : '#c84040';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // ── Connexion ────────────────────────────────────────────────
+    function handleLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const pass  = document.getElementById('login-password').value;
+      const err   = document.getElementById('login-error');
+
+      err.classList.add('hidden');
+
+      if (!email || !pass) {
+        err.textContent = 'Remplis tous les champs.';
+        err.classList.remove('hidden');
+        return;
+      }
+
+      // Récupère les comptes enregistrés
+      const users = JSON.parse(localStorage.getItem('fyt_users') || '[]');
+      const user  = users.find(u => u.email === email && u.password === pass);
+
+      if (!user) {
+        err.textContent = 'Email ou mot de passe incorrect.';
+        err.classList.remove('hidden');
+        return;
+      }
+
+      localStorage.setItem('fyt_current_user', JSON.stringify(user));
+      showToast('✓ Connexion réussie ! Redirection...');
+      setTimeout(() => window.location.href = 'fyt-dashboard.html', 1400);
+    }
+
+    // ── Inscription ──────────────────────────────────────────────
+    function handleSignup() {
+      const name  = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const pass  = document.getElementById('signup-password').value;
+      const err   = document.getElementById('signup-error');
+
+      err.classList.add('hidden');
+
+      if (!name || !email || !pass || !selectedProfile) {
+        err.textContent = 'Remplis tous les champs et choisis ton profil.';
+        err.classList.remove('hidden');
+        return;
+      }
+      if (pass.length < 8) {
+        err.textContent = 'Le mot de passe doit faire 8 caractères minimum.';
+        err.classList.remove('hidden');
+        return;
+      }
+
+      const users = JSON.parse(localStorage.getItem('fyt_users') || '[]');
+      if (users.find(u => u.email === email)) {
+        err.textContent = 'Cet email est déjà utilisé.';
+        err.classList.remove('hidden');
+        return;
+      }
+
+      const newUser = { name, email, password: pass, profile: selectedProfile, tasks: [], createdAt: Date.now() };
+      users.push(newUser);
+      localStorage.setItem('fyt_users', JSON.stringify(users));
+      localStorage.setItem('fyt_current_user', JSON.stringify(newUser));
+
+      showToast('✓ Compte créé ! Bienvenue ' + name + ' 🎉');
+      setTimeout(() => window.location.href = 'fyt-dashboard.html', 1400);
+    }
+
+    // ── Google (simulation) ───────────────────────────────────────
+    function googleLogin() {
+      showToast('Google Login — intégration à configurer', false);
+    }
+
+    function forgotPassword() {
+      showToast('Un email de réinitialisation a été envoyé.', true);
+    }
+
+    // ── Enter key ────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        if (currentTab === 'login') handleLogin();
+        else handleSignup();
+      }
+    });
+  </script>
+</body>
+</html>

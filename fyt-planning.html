@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Find Your Time — Planning IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0800; --bg-card: #0f0c00; --bg-input: #1a1400;
+      --gold: #ffd700; --gold-2: #c89600; --gold-muted: #806030;
+      --gold-dark: #604820; --text: #e8d080; --border: rgba(200,150,0,0.18);
+      --green: #4a9660; --red: #c84000;
+    }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #0a0800, #110e00, #0d0a00);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      color: var(--text); padding-bottom: 100px; overflow-x: hidden;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      background: #0a0800f0; backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 12px; }
+    .back-btn {
+      background: none; border: 1px solid var(--border);
+      border-radius: 10px; padding: 6px 12px;
+      color: var(--gold-muted); font-size: 13px; cursor: pointer;
+      font-family: 'Cormorant Garamond', serif; transition: all 0.2s;
+    }
+    .back-btn:hover { color: var(--gold); border-color: rgba(200,150,0,0.4); }
+    .topbar-title {
+      font-size: 17px; font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .regen-btn {
+      background: rgba(200,150,0,0.1); border: 1px solid rgba(200,150,0,0.3);
+      border-radius: 10px; padding: 7px 14px;
+      color: var(--gold-muted); font-size: 12px; cursor: pointer;
+      font-family: 'DM Mono', monospace; letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+    .regen-btn:hover { color: var(--gold); border-color: rgba(200,150,0,0.5); }
+
+    /* PAGE */
+    .page { max-width: 480px; margin: 0 auto; padding: 24px 16px; }
+
+    /* ÉTAT VIDE */
+    .empty-state {
+      text-align: center; padding: 60px 20px;
+      animation: fadeUp 0.5s ease;
+    }
+    .empty-state .big-icon { font-size: 64px; opacity: 0.3; margin-bottom: 20px; display: block; }
+    .empty-state h3 { font-size: 22px; color: var(--gold); margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; color: var(--gold-dark); line-height: 1.7; font-style: italic; margin-bottom: 28px; }
+
+    /* GENERATE BTN */
+    .generate-btn {
+      width: 100%; padding: 16px;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      border: none; border-radius: 16px;
+      color: #0a0800; font-size: 16px; font-weight: 700;
+      font-family: 'Cormorant Garamond', serif;
+      cursor: pointer; letter-spacing: 1px;
+      box-shadow: 0 8px 32px rgba(255,215,0,0.2);
+      transition: all 0.2s; display: flex; align-items: center;
+      justify-content: center; gap: 10px;
+    }
+    .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(255,215,0,0.3); }
+    .generate-btn:active { transform: translateY(0); }
+    .generate-btn:disabled {
+      background: var(--bg-card); color: var(--gold-dark);
+      border: 1px solid var(--border); box-shadow: none;
+      cursor: not-allowed; transform: none;
+    }
+
+    /* LOADING */
+    .loading-state {
+      text-align: center; padding: 60px 20px;
+      animation: fadeUp 0.4s ease;
+    }
+    .spinner {
+      width: 56px; height: 56px; border-radius: 50%;
+      border: 2px solid rgba(200,150,0,0.15);
+      border-top: 2px solid var(--gold);
+      animation: spin 1s linear infinite;
+      margin: 0 auto 24px;
+    }
+    .loading-msg { font-size: 16px; color: var(--gold); font-weight: 600; margin-bottom: 6px; }
+    .loading-sub { font-size: 12px; color: var(--gold-dark); font-family: 'DM Mono', monospace; font-style: italic; }
+    .loading-dots { display: flex; justify-content: center; gap: 6px; margin-top: 20px; }
+    .loading-dots span {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--gold-2);
+      animation: bounce 1.2s ease infinite;
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    /* RESULT */
+    .result-state { animation: fadeUp 0.5s ease; }
+
+    /* IA CARD */
+    .ia-card {
+      background: linear-gradient(135deg, rgba(200,150,0,0.1), rgba(255,215,0,0.04));
+      border: 1px solid rgba(200,150,0,0.35); border-radius: 16px;
+      padding: 16px; margin-bottom: 16px;
+    }
+    .ia-label {
+      font-size: 10px; color: var(--gold-muted);
+      font-family: 'DM Mono', monospace; letter-spacing: 2px; margin-bottom: 8px;
+    }
+    .ia-message { font-size: 15px; font-style: italic; line-height: 1.7; color: var(--text); }
+
+    /* SCORE */
+    .score-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px; margin-bottom: 16px;
+    }
+    .score-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+    .score-label { font-size: 11px; color: var(--gold-muted);
+      font-family: 'DM Mono', monospace; letter-spacing: 1px; width: 70px; flex-shrink: 0; }
+    .score-track { flex: 1; height: 6px; background: #1a1400; border-radius: 3px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 3px; transition: width 1.2s ease; }
+    .score-val { font-size: 11px; font-family: 'DM Mono', monospace;
+      font-weight: 700; width: 32px; text-align: right; flex-shrink: 0; }
+
+    /* JOURS TABS */
+    .days-tabs {
+      display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px;
+      margin-bottom: 14px;
+    }
+    .days-tabs::-webkit-scrollbar { display: none; }
+    .day-tab {
+      flex-shrink: 0; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 10px 12px; cursor: pointer; transition: all 0.2s;
+      text-align: center; min-width: 62px;
+    }
+    .day-tab.active {
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      border-color: transparent;
+    }
+    .day-tab .dt-name { font-size: 11px; font-family: 'DM Mono', monospace;
+      color: var(--gold-muted); letter-spacing: 1px; }
+    .day-tab.active .dt-name { color: #0a0800; }
+    .day-tab .dt-count { font-size: 18px; font-weight: 700; color: var(--gold); }
+    .day-tab.active .dt-count { color: #0a0800; }
+    .day-tab .dt-date { font-size: 9px; color: var(--gold-dark); font-family: 'DM Mono', monospace; }
+    .day-tab.active .dt-date { color: rgba(10,8,0,0.55); }
+
+    /* TACHES DU JOUR */
+    .day-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px; margin-bottom: 14px;
+    }
+    .day-card-title {
+      font-size: 16px; font-weight: 700; color: var(--gold);
+      margin-bottom: 14px; display: flex; align-items: center;
+      justify-content: space-between;
+    }
+    .day-card-title span { font-size: 11px; color: var(--gold-dark);
+      font-family: 'DM Mono', monospace; font-weight: 400; }
+
+    .slot {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 10px 12px; border-radius: 12px; margin-bottom: 8px;
+      border-left: 3px solid transparent; transition: all 0.2s;
+      animation: slideIn 0.3s ease;
+    }
+    .slot:last-child { margin-bottom: 0; }
+    .slot.scolaire { background: rgba(200,150,0,0.08); border-left-color: var(--gold-2); }
+    .slot.perso    { background: rgba(255,215,0,0.06);  border-left-color: var(--gold); }
+    .slot.repos    { background: rgba(74,150,96,0.08);  border-left-color: var(--green); }
+
+    .slot-time {
+      font-size: 11px; color: var(--gold-dark);
+      font-family: 'DM Mono', monospace; width: 38px;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .slot-emoji { font-size: 18px; flex-shrink: 0; }
+    .slot-info { flex: 1; min-width: 0; }
+    .slot-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .slot-title.scolaire { color: #f0c040; }
+    .slot-title.perso    { color: var(--gold); }
+    .slot-title.repos    { color: #7dc98a; }
+    .slot-meta { font-size: 10px; color: var(--gold-dark);
+      font-family: 'DM Mono', monospace; margin-top: 3px; }
+
+    .day-empty {
+      text-align: center; padding: 20px; color: var(--gold-dark);
+      font-style: italic; font-size: 13px;
+    }
+
+    /* CONSEIL */
+    .conseil-card {
+      background: rgba(200,150,0,0.06); border: 1px solid rgba(200,150,0,0.2);
+      border-radius: 14px; padding: 14px 16px; margin-bottom: 16px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .conseil-icon { font-size: 20px; flex-shrink: 0; }
+    .conseil-label { font-size: 10px; color: var(--gold-dark);
+      font-family: 'DM Mono', monospace; letter-spacing: 2px; margin-bottom: 5px; }
+    .conseil-text { font-size: 13px; color: var(--gold-muted); font-style: italic; line-height: 1.6; }
+
+    /* BOTTOM NAV */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+      background: #0a0800f0; backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; padding: 10px 0 16px;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      cursor: pointer; padding: 4px 16px; border-radius: 10px;
+      color: var(--gold-dark); font-size: 10px;
+      font-family: 'DM Mono', monospace; letter-spacing: 0.5px; transition: all 0.2s;
+    }
+    .nav-item.active { color: var(--gold); }
+    .nav-item span:first-child { font-size: 20px; }
+
+    /* TOAST */
+    .toast {
+      position: fixed; bottom: 90px; left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: var(--bg-card); border: 1px solid rgba(74,150,96,0.4);
+      border-radius: 12px; padding: 10px 20px;
+      color: #7dc98a; font-size: 12px; font-family: 'DM Mono', monospace;
+      transition: transform 0.3s; z-index: 100; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    @keyframes fadeUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes spin    { to { transform: rotate(360deg); } }
+    @keyframes bounce  { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+    @keyframes shimmer { 0% { background-position:-200% center; } 100% { background-position:200% center; } }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" onclick="goBack()">← Retour</button>
+      <span class="topbar-title">Planning IA</span>
+    </div>
+    <button class="regen-btn" id="regen-btn" onclick="generatePlanning()" style="display:none">
+      ↻ Regénérer
+    </button>
+  </div>
+
+  <div class="page" id="page-content">
+    <!-- Contenu injecté dynamiquement -->
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="window.location.href='fyt-dashboard.html'">
+      <span>🏠</span><span>Accueil</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='fyt-add-task.html'">
+      <span>➕</span><span>Tâche</span>
+    </div>
+    <div class="nav-item active">
+      <span>📅</span><span>Planning</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='fyt-login.html'">
+      <span>👤</span><span>Profil</span>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ── Données ─────────────────────────────────────────────────
+    const JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+    const JOURS_SHORT = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+    function getWeekDates() {
+      const today = new Date();
+      const day = today.getDay();
+      const diff = day === 0 ? -6 : 1 - day;
+      const mon = new Date(today); mon.setDate(today.getDate() + diff);
+      return Array.from({length:7}, (_,i) => {
+        const d = new Date(mon); d.setDate(mon.getDate()+i);
+        return d.getDate()+' '+['jan','fév','mar','avr','mai','juin','juil','aoû','sep','oct','nov','déc'][d.getMonth()];
+      });
+    }
+    const DATES = getWeekDates();
+
+    let user = JSON.parse(localStorage.getItem('fyt_current_user') || 'null');
+    if (!user) window.location.href = 'fyt-login.html';
+
+    let planningData = null;
+    let activeDay = new Date().getDay();
+    if (activeDay === 0) activeDay = 6; else activeDay -= 1;
+
+    function getUserTasks() {
+      const users = JSON.parse(localStorage.getItem('fyt_users') || '[]');
+      const u = users.find(u => u.email === user.email);
+      return u ? (u.tasks || []) : [];
+    }
+
+    // ── Render states ────────────────────────────────────────────
+    function renderEmpty() {
+      const tasks = getUserTasks();
+      const page = document.getElementById('page-content');
+      document.getElementById('regen-btn').style.display = 'none';
+
+      if (tasks.length === 0) {
+        page.innerHTML = `
+          <div class="empty-state">
+            <span class="big-icon">📅</span>
+            <h3>Aucune tâche pour l'instant</h3>
+            <p>Ajoute d'abord des tâches depuis le dashboard pour que l'IA puisse générer ton planning.</p>
+            <button class="generate-btn" onclick="window.location.href='fyt-add-task.html'">
+              ➕ Ajouter des tâches
+            </button>
+          </div>`;
+        return;
+      }
+
+      page.innerHTML = `
+        <div class="empty-state">
+          <span class="big-icon">✨</span>
+          <h3>Prêt à générer</h3>
+          <p>Tu as <strong style="color:var(--gold)">${tasks.length} tâche${tasks.length>1?'s':''}</strong> cette semaine.<br>
+          L'IA va créer ton planning optimal en quelques secondes.</p>
+          <button class="generate-btn" onclick="generatePlanning()">
+            <span>✨</span> Générer mon planning IA
+          </button>
+        </div>`;
+    }
+
+    function renderLoading() {
+      const msgs = [
+        'Analyse de tes tâches...', 'Calcul des priorités...',
+        'Équilibrage scolaire / perso...', 'Optimisation du planning...',
+        'Ajout des conseils perso...', 'Finalisation...',
+      ];
+      let i = 0;
+      const page = document.getElementById('page-content');
+      document.getElementById('regen-btn').style.display = 'none';
+
+      page.innerHTML = `
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <div class="loading-msg" id="loading-msg">${msgs[0]}</div>
+          <div class="loading-sub">L'IA analyse tes ${getUserTasks().length} tâches...</div>
+          <div class="loading-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>`;
+
+      return setInterval(() => {
+        i = (i + 1) % msgs.length;
+        const el = document.getElementById('loading-msg');
+        if (el) el.textContent = msgs[i];
+      }, 1300);
+    }
+
+    function renderResult(data) {
+      planningData = data;
+      document.getElementById('regen-btn').style.display = 'flex';
+      const page = document.getElementById('page-content');
+
+      page.innerHTML = `
+        <div class="result-state">
+
+          <!-- Message IA -->
+          <div class="ia-card">
+            <div class="ia-label">✦ MESSAGE DE TON IA</div>
+            <div class="ia-message">"${data.message}"</div>
+          </div>
+
+          <!-- Score équilibre -->
+          <div class="score-card">
+            <div class="ia-label" style="margin-bottom:14px">⚖ ÉQUILIBRE DE SEMAINE</div>
+            ${renderScoreBar('SCOLAIRE', data.score_equilibre?.scolaire||0, 'var(--gold-2)')}
+            ${renderScoreBar('PERSO',    data.score_equilibre?.perso||0,    'var(--gold)')}
+            ${renderScoreBar('REPOS',    data.score_equilibre?.repos||0,    'var(--green)')}
+          </div>
+
+          <!-- Onglets jours -->
+          <div class="days-tabs" id="days-tabs"></div>
+
+          <!-- Tâches du jour -->
+          <div id="day-content"></div>
+
+          <!-- Conseil -->
+          <div class="conseil-card">
+            <span class="conseil-icon">💡</span>
+            <div>
+              <div class="conseil-label">CONSEIL ANTI-PROCRASTINATION</div>
+              <div class="conseil-text">${data.conseil}</div>
+            </div>
+          </div>
+
+        </div>`;
+
+      buildDaysTabs();
+      renderDayContent(activeDay);
+
+      // Animate bars
+      setTimeout(() => {
+        ['scolaire','perso','repos'].forEach(k => {
+          const fill = document.getElementById('fill-'+k);
+          if (fill) fill.style.width = (data.score_equilibre?.[k]||0)+'%';
+        });
+      }, 100);
+    }
+
+    function renderScoreBar(label, value, color) {
+      const key = label.toLowerCase();
+      return `
+        <div class="score-row">
+          <div class="score-label">${label}</div>
+          <div class="score-track">
+            <div class="score-fill" id="fill-${key}" style="background:${color}; width:0%"></div>
+          </div>
+          <div class="score-val" style="color:${color}">${value}%</div>
+        </div>`;
+    }
+
+    function buildDaysTabs() {
+      const container = document.getElementById('days-tabs');
+      if (!container || !planningData) return;
+      container.innerHTML = '';
+      JOURS.forEach((j, i) => {
+        const dayData = planningData.planning?.find(d => d.jour === j);
+        const count = dayData?.taches?.length || 0;
+        const tab = document.createElement('div');
+        tab.className = 'day-tab' + (i === activeDay ? ' active' : '');
+        tab.innerHTML = `
+          <div class="dt-name">${JOURS_SHORT[i]}</div>
+          <div class="dt-count">${count}</div>
+          <div class="dt-date">${DATES[i]}</div>`;
+        tab.onclick = () => {
+          activeDay = i;
+          document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          renderDayContent(i);
+        };
+        container.appendChild(tab);
+      });
+
+      // Scroll to active day
+      setTimeout(() => {
+        const tabs = container.querySelectorAll('.day-tab');
+        if (tabs[activeDay]) tabs[activeDay].scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+      }, 100);
+    }
+
+    function renderDayContent(dayIdx) {
+      const container = document.getElementById('day-content');
+      if (!container || !planningData) return;
+      const dayName = JOURS[dayIdx];
+      const dayData = planningData.planning?.find(d => d.jour === dayName);
+      const taches = dayData?.taches || [];
+
+      let slotsHTML = '';
+      if (taches.length === 0) {
+        slotsHTML = '<div class="day-empty">🌿 Journée libre — profites-en !</div>';
+      } else {
+        taches.forEach(t => {
+          slotsHTML += `
+            <div class="slot ${t.type}">
+              <div class="slot-time">${t.heure}</div>
+              <span class="slot-emoji">${t.emoji}</span>
+              <div class="slot-info">
+                <div class="slot-title ${t.type}">${t.titre}</div>
+                <div class="slot-meta">${t.duree} · ${t.type}</div>
+              </div>
+            </div>`;
+        });
+      }
+
+      container.innerHTML = `
+        <div class="day-card">
+          <div class="day-card-title">
+            ${dayName}
+            <span>${DATES[dayIdx]} · ${taches.length} tâche${taches.length>1?'s':''}</span>
+          </div>
+          ${slotsHTML}
+        </div>`;
+    }
+
+    // ── Génération IA ────────────────────────────────────────────
+    async function generatePlanning() {
+      const tasks = getUserTasks();
+      if (tasks.length === 0) { renderEmpty(); return; }
+
+      const interval = renderLoading();
+
+      const tasksList = tasks.map(t =>
+        `- ${t.title} | Type: ${t.type} | Priorité: ${t.priority} | Durée: ${t.duration} | Jour souhaité: ${JOURS[t.day]}`
+      ).join('\n');
+
+      const systemPrompt = `Tu es l'IA de "Find Your Time", une app de planning pour les jeunes.
+Tu reçois une liste de tâches avec priorités et durées.
+Tu génères un planning sur 7 jours (Lundi à Dimanche), réaliste, motivant et équilibré.
+
+Réponds UNIQUEMENT en JSON valide avec cette structure exacte (aucun texte avant ou après):
+{
+  "message": "message motivant court en tutoiement (1 phrase max)",
+  "score_equilibre": { "scolaire": number, "perso": number, "repos": number },
+  "planning": [
+    {
+      "jour": "Lundi",
+      "taches": [
+        { "heure": "09:00", "duree": "1h", "titre": "...", "type": "scolaire|perso|repos", "emoji": "..." }
+      ]
+    }
+  ],
+  "conseil": "conseil anti-procrastination court et concret"
+}
+
+Règles importantes:
+- Max 5-6 tâches par jour, max 6h de travail/jour
+- Respecte les jours souhaités si possible
+- Place les tâches urgentes en début de semaine
+- Inclus des pauses et moments repos
+- Les 3 scores doivent totaliser 100
+- Couvre les 7 jours même si certains sont vides (taches: [])`;
+
+      const userMessage = `Voici mes tâches de la semaine:\n${tasksList}\n\nGénère mon planning pour la semaine du ${DATES[0]} au ${DATES[6]}.`;
+
+      try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            system: systemPrompt,
+            messages: [{ role: 'user', content: userMessage }],
+          }),
+        });
+
+        clearInterval(interval);
+
+        const data = await res.json();
+        const raw = data.content?.map(b => b.text || '').join('') || '{}';
+        const clean = raw.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(clean);
+
+        // Sauvegarde le planning
+        const users = JSON.parse(localStorage.getItem('fyt_users') || '[]');
+        const idx = users.findIndex(u => u.email === user.email);
+        if (idx !== -1) {
+          users[idx].lastPlanning = parsed;
+          users[idx].lastPlanningDate = Date.now();
+          localStorage.setItem('fyt_users', JSON.stringify(users));
+        }
+
+        renderResult(parsed);
+        showToast('✓ Planning généré avec succès !');
+
+      } catch (e) {
+        clearInterval(interval);
+        renderEmpty();
+        showToast('❌ Erreur — vérifie ta connexion', true);
+      }
+    }
+
+    // ── Toast ────────────────────────────────────────────────────
+    function showToast(msg, error = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.borderColor = error ? 'rgba(200,64,0,0.4)' : 'rgba(74,150,96,0.4)';
+      t.style.color = error ? '#c84040' : '#7dc98a';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function goBack() { window.location.href = 'fyt-dashboard.html'; }
+
+    // ── Init ─────────────────────────────────────────────────────
+    // Charge le dernier planning si dispo
+    const users = JSON.parse(localStorage.getItem('fyt_users') || '[]');
+    const currentUser = users.find(u => u.email === user.email);
+    if (currentUser?.lastPlanning) {
+      renderResult(currentUser.lastPlanning);
+    } else {
+      renderEmpty();
+    }
+  </script>
+</body>
+</html>
