@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Find Your Time</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0a0800; --bg-card: #0f0c00; --bg-input: #1a1400;
+      --gold: #ffd700; --gold-2: #c89600; --gold-muted: #806030;
+      --gold-dark: #604820; --text: #e8d080; --border: rgba(200,150,0,0.18);
+      --green: #4a9660; --red: #c84000;
+    }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #0a0800, #110e00, #0d0a00);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      color: var(--text); overflow-x: hidden;
+    }
+    .page { display: none; min-height: 100vh; }
+    .page.active { display: block; }
+
+    /* ── PARTICULES ── */
+    .particles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .particle { position: absolute; bottom: -10px; border-radius: 50%; background: var(--gold); opacity: 0.2; animation: floatUp linear infinite; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      background: #0a0800f0; backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-logo { font-size: 18px; }
+    .topbar-title {
+      font-size: 16px; font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: #0a0800;
+      cursor: pointer; font-family: 'DM Mono', monospace;
+    }
+    .back-btn {
+      background: none; border: 1px solid var(--border); border-radius: 10px;
+      padding: 6px 12px; color: var(--gold-muted); font-size: 13px;
+      cursor: pointer; font-family: 'Cormorant Garamond', serif; transition: all 0.2s;
+    }
+    .back-btn:hover { color: var(--gold); }
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
+      background: #0a0800f0; backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; padding: 10px 0 16px;
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      cursor: pointer; padding: 4px 16px; color: var(--gold-dark);
+      font-size: 10px; font-family: 'DM Mono', monospace; letter-spacing: 0.5px;
+    }
+    .nav-item.active { color: var(--gold); }
+    .nav-item span:first-child { font-size: 20px; }
+
+    /* ── CARDS & UTILS ── */
+    .wrap { max-width: 480px; margin: 0 auto; padding: 24px 16px 100px; }
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 16px; margin-bottom: 14px;
+    }
+    .card-label {
+      font-size: 10px; color: var(--gold-muted);
+      font-family: 'DM Mono', monospace; letter-spacing: 2px; margin-bottom: 10px;
+    }
+    .section-label {
+      font-size: 10px; color: var(--gold-muted);
+      font-family: 'DM Mono', monospace; letter-spacing: 2px; margin-bottom: 10px;
+    }
+    .gold-btn {
+      width: 100%; padding: 15px;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      border: none; border-radius: 14px; color: #0a0800;
+      font-size: 15px; font-weight: 700; font-family: 'Cormorant Garamond', serif;
+      cursor: pointer; letter-spacing: 1px; transition: all 0.2s;
+      box-shadow: 0 6px 24px rgba(255,215,0,0.15);
+    }
+    .gold-btn:hover { transform: translateY(-2px); }
+    .gold-btn:disabled { background: var(--bg-card); color: var(--gold-dark); border: 1px solid var(--border); box-shadow: none; cursor: not-allowed; transform: none; }
+    input[type=text], input[type=email], input[type=password], textarea {
+      width: 100%; background: var(--bg-input); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px; color: var(--text);
+      font-size: 14px; font-family: 'Cormorant Garamond', serif; outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { border-color: rgba(200,150,0,0.5); }
+    input::placeholder, textarea::placeholder { color: var(--gold-dark); font-style: italic; }
+    textarea { resize: none; line-height: 1.6; }
+    .tabs-toggle {
+      display: flex; background: var(--bg); border-radius: 12px;
+      padding: 4px; margin-bottom: 24px; border: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1; padding: 10px; border: none; background: transparent;
+      color: var(--gold-muted); font-size: 13px; font-family: 'Cormorant Garamond', serif;
+      font-weight: 600; cursor: pointer; border-radius: 9px; transition: all 0.2s;
+    }
+    .tab-btn.active { background: linear-gradient(135deg, var(--gold-2), var(--gold)); color: #0a0800; }
+    .error-msg { font-size: 11px; color: #c84040; font-family: 'DM Mono', monospace; margin-top: 6px; display: none; }
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 10px; font-family: 'DM Mono', monospace; color: var(--gold-muted); letter-spacing: 2px; margin-bottom: 6px; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 90px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--bg-card); border: 1px solid rgba(74,150,96,0.4);
+      border-radius: 12px; padding: 10px 20px; color: #7dc98a;
+      font-size: 12px; font-family: 'DM Mono', monospace;
+      transition: transform 0.3s; z-index: 200; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ════════════════════════════════════════
+       PAGE LOGIN
+    ════════════════════════════════════════ */
+    #page-login {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px; position: relative; z-index: 1;
+    }
+    #page-login.active { display: flex; }
+    .login-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 24px; padding: 36px 28px; width: 100%; max-width: 400px;
+      animation: fadeUp 0.5s ease;
+    }
+    .login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .login-logo-icon {
+      width: 46px; height: 46px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+      box-shadow: 0 0 20px rgba(255,215,0,0.2);
+    }
+    .login-logo h1 {
+      font-size: 19px; font-weight: 700;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .login-logo p { font-size: 10px; color: var(--gold-dark); font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+    .profile-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .profile-opt {
+      padding: 12px 6px; text-align: center; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: all 0.2s;
+      font-size: 12px; color: var(--gold-muted);
+    }
+    .profile-opt .icon { font-size: 20px; display: block; margin-bottom: 4px; }
+    .profile-opt.selected { background: rgba(200,150,0,0.12); border-color: rgba(200,150,0,0.5); color: var(--gold); }
+
+    /* ════════════════════════════════════════
+       PAGE DASHBOARD
+    ════════════════════════════════════════ */
+    .greeting { margin-bottom: 20px; }
+    .greeting h2 { font-size: 26px; font-weight: 700; color: var(--gold); }
+    .greeting p { font-size: 11px; color: var(--gold-dark); font-family: 'DM Mono', monospace; letter-spacing: 1px; margin-top: 3px; }
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+    .stat-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 14px 10px; text-align: center; }
+    .stat-num { font-size: 24px; font-weight: 700; color: var(--gold); }
+    .stat-lbl { font-size: 9px; color: var(--gold-dark); font-family: 'DM Mono', monospace; letter-spacing: 1px; margin-top: 3px; }
+    .ia-card-dash {
+      background: linear-gradient(135deg, rgba(200,150,0,0.08), rgba(255,215,0,0.03));
+      border: 1px solid rgba(200,150,0,0.3); border-radius: 16px; padding: 16px; margin-bottom: 14px;
+    }
+    .ia-msg { font-size: 14px; font-style: italic; line-height: 1.7; }
+    .score-bar { margin-bottom: 10px; }
+    .score-bar-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .score-bar-label { font-size: 10px; color: var(--gold-muted); font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+    .score-bar-val { font-size: 10px; font-weight: 700; font-family: 'DM Mono', monospace; }
+    .score-bar-track { height: 5px; background: #1a1400; border-radius: 3px; overflow: hidden; }
+    .score-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+    .days-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
+    .days-scroll::-webkit-scrollbar { display: none; }
+    .day-chip {
+      flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 13px; cursor: pointer; transition: all 0.2s; text-align: center; min-width: 58px;
+    }
+    .day-chip.active { background: linear-gradient(135deg, var(--gold-2), var(--gold)); border-color: transparent; }
+    .day-chip .dn { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--gold-muted); letter-spacing: 1px; }
+    .day-chip.active .dn { color: #0a0800; }
+    .day-chip .dc { font-size: 18px; font-weight: 700; color: var(--gold); }
+    .day-chip.active .dc { color: #0a0800; }
+    .day-chip .dd { font-size: 9px; color: var(--gold-dark); font-family: 'DM Mono', monospace; }
+    .day-chip.active .dd { color: rgba(10,8,0,0.55); }
+    .task-item {
+      display: flex; align-items: center; gap: 12px; padding: 11px 12px;
+      border-radius: 12px; margin-bottom: 8px; border: 1px solid transparent;
+      cursor: pointer; transition: all 0.2s; animation: slideIn 0.3s ease;
+    }
+    .task-item.scolaire { background: rgba(200,150,0,0.08); border-color: rgba(200,150,0,0.2); }
+    .task-item.perso    { background: rgba(255,215,0,0.06); border-color: rgba(255,215,0,0.12); }
+    .task-item.repos    { background: rgba(74,150,96,0.08); border-color: rgba(74,150,96,0.2); }
+    .task-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .task-dot.scolaire { background: var(--gold-2); }
+    .task-dot.perso    { background: var(--gold); }
+    .task-dot.repos    { background: var(--green); }
+    .task-info { flex: 1; min-width: 0; }
+    .task-title { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .task-title.done { text-decoration: line-through; color: var(--gold-dark); }
+    .task-meta { font-size: 10px; color: var(--gold-dark); font-family: 'DM Mono', monospace; margin-top: 2px; }
+    .task-check {
+      width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; flex-shrink: 0; transition: all 0.2s; cursor: pointer;
+    }
+    .task-check.checked { background: var(--green); border-color: var(--green); color: white; }
+    .empty-day { text-align: center; padding: 28px; color: var(--gold-dark); font-style: italic; font-size: 14px; }
+    .fab {
+      position: fixed; bottom: 80px; right: 20px; z-index: 30;
+      width: 54px; height: 54px; border-radius: 16px;
+      background: linear-gradient(135deg, var(--gold-2), var(--gold));
+      border: none; font-size: 26px; cursor: pointer;
+      box-shadow: 0 8px 28px rgba(255,215,0,0.3); transition: all 0.2s;
+    }
+    .fab:hover { transform: scale(1.08); }
+
+    /* ════════════════════════════════════════
+       PAGE ADD TASK
+    ════════════════════════════════════════ */
+    .progress-bar { height: 3px; background: var(--bg-input); border-radius: 2px; margin-bottom: 24px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--gold-2), var(--gold)); border-radius: 2px; transition: width 0.4s ease; }
+    .title-input-big {
+      width: 100%; background: transparent; border: none;
+      border-bottom: 2px solid var(--border); padding: 10px 0;
+      font-size: 22px; font-weight: 600; color: var(--gold);
+      font-family: 'Cormorant Garamond', serif; outline: none;
+      transition: border-color 0.2s; caret-color: var(--gold);
+    }
+    .title-input-big:focus { border-bottom-color: rgba(200,150,0,0.6); }
+    .title-input-big::placeholder { color: var(--gold-dark); font-weight: 400; font-style: italic; }
+    .type-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .type-card {
+      padding: 14px 8px; text-align: center; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 14px; cursor: pointer; transition: all 0.2s;
+    }
+    .type-card .ti { font-size: 24px; display: block; margin-bottom: 6px; }
+    .type-card .tl { font-size: 12px; color: var(--gold-muted); }
+    .type-card.sel-scolaire { background: rgba(200,150,0,0.12); border-color: rgba(200,150,0,0.5); }
+    .type-card.sel-scolaire .tl { color: var(--gold-2); }
+    .type-card.sel-perso { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.4); }
+    .type-card.sel-perso .tl { color: var(--gold); }
+    .type-card.sel-repos { background: rgba(74,150,96,0.1); border-color: rgba(74,150,96,0.4); }
+    .type-card.sel-repos .tl { color: var(--green); }
+    .priority-list { display: flex; flex-direction: column; gap: 8px; }
+    .priority-opt {
+      display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+      border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .priority-opt.selected { border-color: rgba(200,150,0,0.4); background: rgba(200,150,0,0.06); }
+    .priority-opt .pi { font-size: 16px; }
+    .priority-opt .pn { font-size: 13px; color: var(--text); font-weight: 600; }
+    .priority-opt .pd { font-size: 10px; color: var(--gold-dark); font-family: 'DM Mono', monospace; }
+    .priority-opt .pr { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border); margin-left: auto; flex-shrink: 0; transition: all 0.2s; }
+    .priority-opt.selected .pr { background: var(--gold-2); border-color: var(--gold-2); }
+    .duration-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .dur-opt {
+      padding: 12px 8px; text-align: center; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+      transition: all 0.2s; font-size: 12px; color: var(--gold-muted); font-family: 'DM Mono', monospace;
+    }
+    .dur-opt .di { font-size: 16px; display: block; margin-bottom: 4px; }
+    .dur-opt.selected { background: rgba(200,150,0,0.12); border-color: rgba(200,150,0,0.5); color: var(--gold); }
+    .day-scroll-add { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+    .day-scroll-add::-webkit-scrollbar { display: none; }
+    .day-opt-add {
+      flex-shrink: 0; padding: 10px 13px; text-align: center; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; min-width: 56px;
+    }
+    .day-opt-add .don { font-size: 10px; color: var(--gold-muted); font-family: 'DM Mono', monospace; letter-spacing: 1px; }
+    .day-opt-add .dod { font-size: 9px; color: var(--gold-dark); font-family: 'DM Mono', monospace; margin-top: 2px; }
+    .day-opt-add.selected { background: linear-gradient(135deg, var(--gold-2), var(--gold)); border-color: transparent; }
+    .day-opt-add.selected .don, .day-opt-add.selected .dod { color: #0a0800; }
+    .section-add { margin-bottom: 22px; }
+
+    /* ════════════════════════════════════════
+       PAGE PLANNING
+    ════════════════════════════════════════ */
+    .empty-planning { text-align: center; padding: 60px 20px; }
+    .empty-planning .ep-icon { font-size: 56px; opacity: 0.3; margin-bottom: 18px; display: block; }
+    .empty-planning h3 { font-size: 22px; color: var(--gold); margin-bottom: 8px; }
+    .empty-planning p { font-size: 14px; color: var(--gold-dark); line-height: 1.7; font-style: italic; margin-bottom: 24px; }
+    .spinner { width: 52px; height: 52px; border-radius: 50%; border: 2px solid rgba(200,150,0,0.15); border-top: 2px solid var(--gold); animation: spin 1s linear infinite; margin: 0 auto 20px; }
+    .loading-state { text-align: center; padding: 60px 20px; }
+    .loading-msg { font-size: 16px; color: var(--gold); font-weight: 600; margin-bottom: 6px; }
+    .loading-sub { font-size: 12px; color: var(--gold-dark); font-family: 'DM Mono', monospace; }
+    .loading-dots { display: flex; justify-content: center; gap: 6px; margin-top: 18px; }
+    .loading-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--gold-2); animation: bounce 1.2s ease infinite; }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+    .ia-card-plan {
+      background: linear-gradient(135deg, rgba(200,150,0,0.1), rgba(255,215,0,0.04));
+      border: 1px solid rgba(200,150,0,0.35); border-radius: 16px; padding: 16px; margin-bottom: 14px;
+    }
+    .score-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .score-lbl { font-size: 10px; color: var(--gold-muted); font-family: 'DM Mono', monospace; letter-spacing: 1px; width: 68px; flex-shrink: 0; }
+    .score-track { flex: 1; height: 5px; background: #1a1400; border-radius: 3px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 3px; transition: width 1.2s ease; }
+    .score-val { font-size: 10px; font-family: 'DM Mono', monospace; font-weight: 700; width: 30px; text-align: right; flex-shrink: 0; }
+    .days-tabs-plan { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
+    .days-tabs-plan::-webkit-scrollbar { display: none; }
+    .day-tab {
+      flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; text-align: center; min-width: 60px;
+    }
+    .day-tab.active { background: linear-gradient(135deg, var(--gold-2), var(--gold)); border-color: transparent; }
+    .day-tab .dtn { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--gold-muted); letter-spacing: 1px; }
+    .day-tab.active .dtn { color: #0a0800; }
+    .day-tab .dtc { font-size: 18px; font-weight: 700; color: var(--gold); }
+    .day-tab.active .dtc { color: #0a0800; }
+    .day-tab .dtd { font-size: 9px; color: var(--gold-dark); font-family: 'DM Mono', monospace; }
+    .day-tab.active .dtd { color: rgba(10,8,0,0.55); }
+    .slot {
+      display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px;
+      border-radius: 12px; margin-bottom: 8px; border-left: 3px solid transparent; animation: slideIn 0.3s ease;
+    }
+    .slot.scolaire { background: rgba(200,150,0,0.08); border-left-color: var(--gold-2); }
+    .slot.perso    { background: rgba(255,215,0,0.06); border-left-color: var(--gold); }
+    .slot.repos    { background: rgba(74,150,96,0.08); border-left-color: var(--green); }
+    .slot-time { font-size: 10px; color: var(--gold-dark); font-family: 'DM Mono', monospace; width: 36px; flex-shrink: 0; margin-top: 3px; }
+    .slot-emoji { font-size: 17px; flex-shrink: 0; }
+    .slot-info { flex: 1; min-width: 0; }
+    .slot-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .slot-title.scolaire { color: #f0c040; }
+    .slot-title.perso    { color: var(--gold); }
+    .slot-title.repos    { color: #7dc98a; }
+    .slot-meta { font-size: 10px; color: var(--gold-dark); font-family: 'DM Mono', monospace; margin-top: 2px; }
+    .conseil-card {
+      background: rgba(200,150,0,0.06); border: 1px solid rgba(200,150,0,0.2);
+      border-radius: 14px; padding: 14px; display: flex; gap: 10px; margin-bottom: 14px;
+    }
+    .regen-btn {
+      background: rgba(200,150,0,0.1); border: 1px solid rgba(200,150,0,0.3);
+      border-radius: 10px; padding: 7px 14px; color: var(--gold-muted);
+      font-size: 12px; cursor: pointer; font-family: 'DM Mono', monospace;
+      letter-spacing: 1px; transition: all 0.2s;
+    }
+    .regen-btn:hover { color: var(--gold); }
+
+    /* ── ANIMATIONS ── */
+
+    /* STREAKS */
+    .streak-hero{text-align:center;padding:24px 20px;}
+    .streak-fire{font-size:64px;display:block;margin-bottom:8px;}
+    .streak-count{font-size:56px;font-weight:700;color:var(--gold);line-height:1;font-family:"DM Mono",monospace;}
+    .streak-label{font-size:12px;color:var(--gold-muted);font-family:"DM Mono",monospace;letter-spacing:2px;margin-top:4px;}
+    .badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+    .badge-card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;transition:all 0.2s;}
+    .badge-card.unlocked{border-color:rgba(200,150,0,0.4);background:rgba(200,150,0,0.08);}
+    .badge-card.locked{opacity:0.4;}
+    .badge-icon{font-size:28px;display:block;margin-bottom:6px;}
+    .badge-name{font-size:11px;color:var(--text);font-weight:600;margin-bottom:2px;}
+    .badge-desc{font-size:9px;color:var(--gold-dark);font-family:"DM Mono",monospace;}
+    .xp-bar-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+    .xp-bar-track{height:8px;background:#1a1400;border-radius:4px;overflow:hidden;margin:8px 0;}
+    .xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--gold-2),var(--gold));border-radius:4px;transition:width 1s ease;}
+
+    /* JOURNAL */
+    .journal-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+    .journal-stat{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;}
+    .journal-stat-num{font-size:22px;font-weight:700;color:var(--gold);}
+    .journal-stat-lbl{font-size:9px;color:var(--gold-dark);font-family:"DM Mono",monospace;letter-spacing:1px;margin-top:2px;}
+    .journal-bilan-card{background:linear-gradient(135deg,rgba(200,150,0,0.1),rgba(255,215,0,0.04));border:1px solid rgba(200,150,0,0.3);border-radius:16px;padding:18px;margin-bottom:14px;}
+
+    /* MOOD */
+    .mood-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px;}
+    .mood-opt{padding:12px 6px;text-align:center;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all 0.2s;}
+    .mood-emoji{font-size:28px;display:block;margin-bottom:4px;}
+    .mood-label{font-size:9px;color:var(--gold-muted);font-family:"DM Mono",monospace;letter-spacing:0.5px;}
+    .mood-opt.selected{border-color:var(--gold);background:rgba(200,150,0,0.12);}
+    .mood-history{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;}
+    .mood-history::-webkit-scrollbar{display:none;}
+    .mood-day{flex-shrink:0;text-align:center;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:8px 10px;min-width:50px;}
+    .mood-day-emoji{font-size:20px;display:block;}
+    .mood-day-date{font-size:9px;color:var(--gold-dark);font-family:"DM Mono",monospace;margin-top:2px;}
+
+    /* FOCUS */
+    .focus-circle{width:200px;height:200px;border-radius:50%;border:3px solid var(--border);margin:0 auto 24px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;cursor:pointer;background:var(--bg-card);box-shadow:0 0 40px rgba(200,150,0,0.1);transition:all 0.3s;}
+    .focus-circle.running{border-color:var(--gold);box-shadow:0 0 60px rgba(255,215,0,0.2);}
+    .focus-circle.break{border-color:var(--green);box-shadow:0 0 60px rgba(74,150,96,0.2);}
+    .focus-time{font-size:48px;font-weight:700;color:var(--gold);font-family:"DM Mono",monospace;}
+    .focus-label{font-size:11px;color:var(--gold-muted);font-family:"DM Mono",monospace;letter-spacing:2px;margin-top:4px;}
+    .focus-controls{display:flex;gap:10px;margin-bottom:20px;}
+    .focus-btn{flex:1;padding:14px;border-radius:12px;border:none;cursor:pointer;font-size:14px;font-weight:700;font-family:"Cormorant Garamond",serif;transition:all 0.2s;}
+    .focus-btn-primary{background:linear-gradient(135deg,var(--gold-2),var(--gold));color:#0a0800;}
+    .focus-btn-secondary{background:var(--bg-card);border:1px solid var(--border)!important;color:var(--gold-muted);}
+    .pom-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px;}
+    .pom-dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:all 0.3s;}
+    .pom-dot.done{background:var(--gold);}
+    @keyframes floatUp { 0% { transform:translateY(0) scale(1); opacity:0.2; } 100% { transform:translateY(-100vh) scale(0); opacity:0; } }
+    @keyframes fadeUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes spin    { to { transform:rotate(360deg); } }
+    @keyframes bounce  { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+    @keyframes shimmer { 0% { background-position:-200% center; } 100% { background-position:200% center; } }
+  </style>
+</head>
+<body>
+
+<!-- ════ PARTICULES ════ -->
+<div class="particles" id="particles"></div>
+
+<!-- ════ TOAST ════ -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE LOGIN
+══════════════════════════════════════════════════ -->
+<div class="page active" id="page-login">
+  <div class="login-card" style="margin:auto;position:relative;z-index:1;">
+    <div class="login-logo">
+      <div class="login-logo-icon"><img src="https://raw.githubusercontent.com/erwandess/find-your-time/main/logo.png" style="width:100%;height:100%;object-fit:cover;border-radius:14px;"/></div>
+      <div>
+        <h1>Find Your Time</h1>
+        <p>MAÎTRISER SON TEMPS</p>
+      </div>
+    </div>
+
+    <div class="tabs-toggle">
+      <button class="tab-btn active" onclick="switchLoginTab('login')">Connexion</button>
+      <button class="tab-btn" onclick="switchLoginTab('signup')">Inscription</button>
+    </div>
+
+    <!-- Connexion -->
+    <div id="login-form">
+      <div class="form-group">
+        <label>EMAIL</label>
+        <input type="email" id="l-email" placeholder="ton@email.com"/>
+      </div>
+      <div class="form-group">
+        <label>MOT DE PASSE</label>
+        <input type="password" id="l-pass" placeholder="••••••••"/>
+        <div class="error-msg" id="l-err">Email ou mot de passe incorrect.</div>
+      </div>
+      <button class="gold-btn" onclick="doLogin()">Connexion →</button>
+    </div>
+
+    <!-- Inscription -->
+    <div id="signup-form" style="display:none">
+      <div class="form-group">
+        <label>TON PRÉNOM</label>
+        <input type="text" id="s-name" placeholder="Ex: Erwan"/>
+      </div>
+      <div class="form-group">
+        <label>EMAIL</label>
+        <input type="email" id="s-email" placeholder="ton@email.com"/>
+      </div>
+      <div class="form-group">
+        <label>MOT DE PASSE</label>
+        <input type="password" id="s-pass" placeholder="8 caractères minimum"/>
+      </div>
+      <div class="form-group">
+        <label>TU ES PLUTÔT ?</label>
+        <div class="profile-grid">
+          <div class="profile-opt" onclick="selProfile(this,'lyceen')"><span class="icon">📚</span>Lycéen</div>
+          <div class="profile-opt" onclick="selProfile(this,'etudiant')"><span class="icon">🎓</span>Étudiant</div>
+          <div class="profile-opt" onclick="selProfile(this,'actif')"><span class="icon">💼</span>Actif</div>
+        </div>
+        <div class="error-msg" id="s-err">Remplis tous les champs.</div>
+      </div>
+      <button class="gold-btn" onclick="doSignup()">Créer mon compte →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE DASHBOARD
+══════════════════════════════════════════════════ -->
+<div class="page" id="page-dashboard">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo"><img src="https://raw.githubusercontent.com/erwandess/find-your-time/main/logo.png" style="width:26px;height:26px;border-radius:8px;object-fit:cover;vertical-align:middle;"/></span>
+      <span class="topbar-title">Find Your Time</span>
+    </div>
+    <div class="avatar" id="dash-avatar">?</div>
+  </div>
+  <div class="wrap">
+    <div class="greeting">
+      <h2 id="dash-greeting">Bonjour 👋</h2>
+      <p id="dash-date"></p>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">TÂCHES</div></div>
+      <div class="stat-box"><div class="stat-num" id="s-done" style="color:var(--green)">0</div><div class="stat-lbl">FAITES</div></div>
+      <div class="stat-box"><div class="stat-num" id="s-pend" style="color:var(--gold-2)">0</div><div class="stat-lbl">EN COURS</div></div>
+    </div>
+    <div class="ia-card-dash">
+      <div class="card-label">✦ MESSAGE DE TON IA</div>
+      <div class="ia-msg" id="dash-ia-msg">Ajoute tes premières tâches pour que je génère ton planning. 🌟</div>
+    </div>
+    <div class="card">
+      <div class="card-label">⚖ ÉQUILIBRE</div>
+      <div class="score-bar">
+        <div class="score-bar-header"><span class="score-bar-label">SCOLAIRE</span><span class="score-bar-val" id="d-sc" style="color:var(--gold-2)">0%</span></div>
+        <div class="score-bar-track"><div class="score-bar-fill" id="d-sb" style="background:var(--gold-2);width:0%"></div></div>
+      </div>
+      <div class="score-bar">
+        <div class="score-bar-header"><span class="score-bar-label">PERSO</span><span class="score-bar-val" id="d-pc" style="color:var(--gold)">0%</span></div>
+        <div class="score-bar-track"><div class="score-bar-fill" id="d-pb" style="background:var(--gold);width:0%"></div></div>
+      </div>
+      <div class="score-bar">
+        <div class="score-bar-header"><span class="score-bar-label">REPOS</span><span class="score-bar-val" id="d-rc" style="color:var(--green)">0%</span></div>
+        <div class="score-bar-track"><div class="score-bar-fill" id="d-rb" style="background:var(--green);width:0%"></div></div>
+      </div>
+    </div>
+    <div class="card-label" style="padding:0 4px;margin-bottom:10px;">📅 CETTE SEMAINE</div>
+    <div class="days-scroll" id="dash-days"></div>
+    <div class="card">
+      <div class="card-label" id="dash-tasks-label">TÂCHES DU JOUR</div>
+      <div id="dash-tasks-list"></div>
+    </div>
+    <button class="gold-btn" style="background:rgba(200,150,0,0.1);color:var(--gold);border:1px solid rgba(200,150,0,0.3);box-shadow:none;" onclick="showPage('planning')">✨ Générer mon planning IA →</button>
+  </div>
+  <button class="fab" onclick="showPage('add-task')">+</button>
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="showPage('dashboard')"><span>🏠</span><span>Accueil</span></div>
+    <div class="nav-item" onclick="showPage('add-task')"><span>➕</span><span>Tâche</span></div>
+    <div class="nav-item" onclick="showPage('planning')"><span>📅</span><span>Planning</span></div>
+    <div class="nav-item" onclick="doLogout()"><span>👤</span><span>Profil</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE ADD TASK
+══════════════════════════════════════════════════ -->
+<div class="page" id="page-add-task">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" onclick="showPage('dashboard')">← Retour</button>
+      <span class="topbar-title">Nouvelle tâche</span>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:40px">
+    <div class="progress-bar"><div class="progress-fill" id="add-progress" style="width:0%"></div></div>
+    <div class="section-add">
+      <div class="section-label">QU'EST-CE QUE TU DOIS FAIRE ?</div>
+      <input type="text" class="title-input-big" id="add-title" placeholder="Ex: Révisions maths bac..." oninput="updateAddProgress()" maxlength="80"/>
+    </div>
+    <div class="section-add">
+      <div class="section-label">CATÉGORIE</div>
+      <div class="type-grid">
+        <div class="type-card" onclick="selType(this,'scolaire')"><span class="ti">📚</span><span class="tl">Scolaire</span></div>
+        <div class="type-card" onclick="selType(this,'perso')"><span class="ti">🎮</span><span class="tl">Perso</span></div>
+        <div class="type-card" onclick="selType(this,'repos')"><span class="ti">😴</span><span class="tl">Repos</span></div>
+      </div>
+    </div>
+    <div class="section-add">
+      <div class="section-label">PRIORITÉ</div>
+      <div class="priority-list">
+        <div class="priority-opt" onclick="selPriority(this,'🔴 Urgent')"><span class="pi">🔴</span><div><div class="pn">Urgent</div><div class="pd">À faire dès que possible</div></div><div class="pr"></div></div>
+        <div class="priority-opt" onclick="selPriority(this,'🟠 Important')"><span class="pi">🟠</span><div><div class="pn">Important</div><div class="pd">Cette semaine impérativement</div></div><div class="pr"></div></div>
+        <div class="priority-opt" onclick="selPriority(this,'🟡 Normal')"><span class="pi">🟡</span><div><div class="pn">Normal</div><div class="pd">Pas de pression particulière</div></div><div class="pr"></div></div>
+        <div class="priority-opt" onclick="selPriority(this,'🟢 Optionnel')"><span class="pi">🟢</span><div><div class="pn">Optionnel</div><div class="pd">Si j'ai le temps</div></div><div class="pr"></div></div>
+      </div>
+    </div>
+    <div class="section-add">
+      <div class="section-label">DURÉE ESTIMÉE</div>
+      <div class="duration-grid">
+        <div class="dur-opt" onclick="selDuration(this,'30 min')"><span class="di">⚡</span>30 min</div>
+        <div class="dur-opt" onclick="selDuration(this,'1h')"><span class="di">⏱</span>1h</div>
+        <div class="dur-opt" onclick="selDuration(this,'1h30')"><span class="di">⌛</span>1h30</div>
+        <div class="dur-opt" onclick="selDuration(this,'2h')"><span class="di">🕐</span>2h</div>
+        <div class="dur-opt" onclick="selDuration(this,'3h')"><span class="di">🕒</span>3h</div>
+        <div class="dur-opt" onclick="selDuration(this,'3h+')"><span class="di">📆</span>3h+</div>
+      </div>
+    </div>
+    <div class="section-add">
+      <div class="section-label">QUEL JOUR ?</div>
+      <div class="day-scroll-add" id="add-days"></div>
+    </div>
+    <div class="section-add">
+      <div class="section-label">NOTES (OPTIONNEL)</div>
+      <textarea id="add-notes" placeholder="Des détails supplémentaires..." rows="3"></textarea>
+    </div>
+    <button class="gold-btn" id="add-submit-btn" onclick="submitTask()" disabled>✨ Ajouter la tâche</button>
+    <div class="error-msg" id="add-err" style="text-align:center;margin-top:8px">Remplis tous les champs obligatoires.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     PAGE PLANNING
+══════════════════════════════════════════════════ -->
+<div class="page" id="page-planning">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" onclick="showPage('dashboard')">← Retour</button>
+      <span class="topbar-title">Planning IA</span>
+    </div>
+    <button class="regen-btn" id="regen-btn" onclick="generatePlanning()" style="display:none">↻ Regénérer</button>
+  </div>
+  <div class="wrap" id="planning-content"></div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showPage('dashboard')"><span>🏠</span><span>Accueil</span></div>
+    <div class="nav-item" onclick="showPage('add-task')"><span>➕</span><span>Tâche</span></div>
+    <div class="nav-item active" onclick="showPage('planning')"><span>📅</span><span>Planning</span></div>
+    <div class="nav-item" onclick="doLogout()"><span>👤</span><span>Profil</span></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════
+const JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+const JOURS_S = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const EMOJIS = { scolaire:'📚', perso:'🎮', repos:'😴' };
+
+function getWeekDates() {
+  const today = new Date(), day = today.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const mon = new Date(today); mon.setDate(today.getDate() + diff);
+  const months = ['jan','fév','mar','avr','mai','juin','juil','aoû','sep','oct','nov','déc'];
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(mon); d.setDate(mon.getDate()+i);
+    return d.getDate()+' '+months[d.getMonth()];
+  });
+}
+const DATES = getWeekDates();
+
+function todayIdx() {
+  let d = new Date().getDay();
+  return d === 0 ? 6 : d - 1;
+}
+
+function showToast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = err ? 'rgba(200,64,0,0.4)' : 'rgba(74,150,96,0.4)';
+  t.style.color = err ? '#c84040' : '#7dc98a';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ══════════════════════════════════════════════════
+// PARTICULES
+// ══════════════════════════════════════════════════
+(function() {
+  const c = document.getElementById('particles');
+  for (let i=0; i<14; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const s = 1 + Math.random()*2.5;
+    p.style.cssText = `left:${Math.random()*100}%;width:${s}px;height:${s}px;animation-duration:${6+Math.random()*10}s;animation-delay:${Math.random()*8}s`;
+    c.appendChild(p);
+  }
+})();
+
+// ══════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  window.scrollTo(0,0);
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'add-task')  initAddTask();
+  if (name === 'planning')  initPlanning();
+}
+
+// ══════════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════════
+function getUsers()   { return JSON.parse(localStorage.getItem('fyt_users')||'[]'); }
+function saveUsers(u) { localStorage.setItem('fyt_users', JSON.stringify(u)); }
+function getCurrentUser() { return JSON.parse(localStorage.getItem('fyt_current_user')||'null'); }
+function setCurrentUser(u){ localStorage.setItem('fyt_current_user', JSON.stringify(u)); }
+
+function getUserTasks() {
+  const user = getCurrentUser(); if (!user) return [];
+  const users = getUsers();
+  const u = users.find(u => u.email === user.email);
+  return u ? (u.tasks||[]) : [];
+}
+
+function saveUserData(data) {
+  const user = getCurrentUser(); if (!user) return;
+  const users = getUsers();
+  const idx = users.findIndex(u => u.email === user.email);
+  if (idx === -1) return;
+  Object.assign(users[idx], data);
+  saveUsers(users);
+  setCurrentUser(users[idx]);
+}
+
+// ══════════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════════
+let selProfileVal = null;
+let loginTab = 'login';
+
+function switchLoginTab(tab) {
+  loginTab = tab;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='signup')));
+  document.getElementById('login-form').style.display  = tab==='login'  ? 'block' : 'none';
+  document.getElementById('signup-form').style.display = tab==='signup' ? 'block' : 'none';
+}
+
+function selProfile(el, val) {
+  document.querySelectorAll('.profile-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected'); selProfileVal = val;
+}
+
+function doLogin() {
+  const email = document.getElementById('l-email').value.trim();
+  const pass  = document.getElementById('l-pass').value;
+  const err   = document.getElementById('l-err');
+  err.style.display = 'none';
+  if (!email||!pass) { err.textContent='Remplis tous les champs.'; err.style.display='block'; return; }
+  const users = getUsers();
+  const user  = users.find(u => u.email===email && u.password===pass);
+  if (!user) { err.style.display='block'; return; }
+  setCurrentUser(user);
+  showToast('✓ Connexion réussie !');
+  setTimeout(() => showPage('dashboard'), 800);
+}
+
+function doSignup() {
+  const name  = document.getElementById('s-name').value.trim();
+  const email = document.getElementById('s-email').value.trim();
+  const pass  = document.getElementById('s-pass').value;
+  const err   = document.getElementById('s-err');
+  err.style.display = 'none';
+  if (!name||!email||!pass||!selProfileVal) { err.textContent='Remplis tous les champs et choisis ton profil.'; err.style.display='block'; return; }
+  if (pass.length < 8) { err.textContent='8 caractères minimum.'; err.style.display='block'; return; }
+  const users = getUsers();
+  if (users.find(u=>u.email===email)) { err.textContent='Email déjà utilisé.'; err.style.display='block'; return; }
+  const newUser = { name, email, password:pass, profile:selProfileVal, tasks:[], createdAt:Date.now() };
+  users.push(newUser); saveUsers(users); setCurrentUser(newUser);
+  showToast('✓ Bienvenue '+name+' 🎉');
+  setTimeout(() => showPage('dashboard'), 900);
+}
+
+function doLogout() {
+  localStorage.removeItem('fyt_current_user');
+  showPage('login');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key==='Enter') { if (loginTab==='login') doLogin(); else doSignup(); }
+});
+
+// ══════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════
+let dashDay = todayIdx();
+
+function renderDashboard() {
+  const user = getCurrentUser(); if (!user) return;
+  document.getElementById('dash-avatar').textContent = (user.name||'?')[0].toUpperCase();
+  const h = new Date().getHours();
+  const gr = h<12?'Bonjour':h<18?'Bon après-midi':'Bonsoir';
+  document.getElementById('dash-greeting').textContent = `${gr} ${user.name} 👋`;
+  const opts = {weekday:'long',day:'numeric',month:'long'};
+  document.getElementById('dash-date').textContent = new Date().toLocaleDateString('fr-FR',opts).toUpperCase();
+  const tasks = getUserTasks();
+  const done = tasks.filter(t=>t.done).length;
+  document.getElementById('s-total').textContent = tasks.length;
+  document.getElementById('s-done').textContent  = done;
+  document.getElementById('s-pend').textContent  = tasks.length - done;
+  renderDashScores(tasks);
+  renderDashDays(tasks);
+  renderDashTasks(tasks, dashDay);
+  if (tasks.length > 0) {
+    const msgs = [
+      "Tu gères ! Continue sur cette lancée, chaque tâche te rapproche de tes objectifs. 💪",
+      "Petit à petit tu prends le contrôle de ton temps. C'est ça la vraie liberté. ⏳",
+      "N'oublie pas de te ménager des moments de repos — l'équilibre c'est la clé. 🌿",
+      "Commence par la tâche la plus difficile le matin, le reste sera plus facile. 🔥",
+    ];
+    document.getElementById('dash-ia-msg').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+  }
+}
+
+function renderDashScores(tasks) {
+  if (!tasks.length) return;
+  const c = {scolaire:0,perso:0,repos:0};
+  tasks.forEach(t => { if(c[t.type]!==undefined) c[t.type]++; });
+  const total = tasks.length;
+  ['scolaire','perso','repos'].forEach(k => {
+    const pct = Math.round((c[k]/total)*100);
+    document.getElementById('d-'+k[0]+'c').textContent = pct+'%';
+    document.getElementById('d-'+k[0]+'b').style.width = pct+'%';
+  });
+}
+
+function renderDashDays(tasks) {
+  const container = document.getElementById('dash-days');
+  container.innerHTML = '';
+  JOURS_S.forEach((j,i) => {
+    const count = tasks.filter(t=>t.day===i).length;
+    const chip = document.createElement('div');
+    chip.className = 'day-chip'+(i===dashDay?' active':'');
+    chip.innerHTML = `<div class="dn">${j}</div><div class="dc">${count}</div><div class="dd">${DATES[i]}</div>`;
+    chip.onclick = () => { dashDay=i; renderDashboard(); };
+    container.appendChild(chip);
+  });
+}
+
+function renderDashTasks(tasks, dayIdx) {
+  const list  = document.getElementById('dash-tasks-list');
+  const label = document.getElementById('dash-tasks-label');
+  label.textContent = `TÂCHES — ${JOURS_S[dayIdx]} ${DATES[dayIdx]}`;
+  const dayTasks = tasks.filter(t=>t.day===dayIdx);
+  list.innerHTML = '';
+  if (!dayTasks.length) { list.innerHTML='<div class="empty-day">🌿 Rien de prévu — appuie sur + pour ajouter.</div>'; return; }
+  dayTasks.forEach(t => {
+    const el = document.createElement('div');
+    el.className = `task-item ${t.type}`;
+    el.innerHTML = `
+      <div class="task-dot ${t.type}"></div>
+      <div class="task-info">
+        <div class="task-title ${t.done?'done':''}">${t.emoji||'📌'} ${t.title}</div>
+        <div class="task-meta">${t.priority} · ${t.duration}</div>
+      </div>
+      <div class="task-check ${t.done?'checked':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>`;
+    list.appendChild(el);
+  });
+}
+
+function toggleTask(id) {
+  const users = getUsers();
+  const user  = getCurrentUser(); if (!user) return;
+  const idx   = users.findIndex(u=>u.email===user.email);
+  if (idx===-1) return;
+  const t = users[idx].tasks.find(t=>t.id===id);
+  if (t) t.done = !t.done;
+  saveUsers(users); setCurrentUser(users[idx]);
+  renderDashboard();
+  showToast(t.done ? '✓ Tâche complétée !' : 'Tâche remise en cours');
+}
+
+// ══════════════════════════════════════════════════
+// ADD TASK
+// ══════════════════════════════════════════════════
+let addType=null, addPriority=null, addDuration=null, addDay=todayIdx();
+
+function initAddTask() {
+  addType=null; addPriority=null; addDuration=null; addDay=todayIdx();
+  document.getElementById('add-title').value = '';
+  document.getElementById('add-notes').value = '';
+  document.getElementById('add-err').style.display = 'none';
+  document.querySelectorAll('.type-card').forEach(c=>c.className='type-card');
+  document.querySelectorAll('.priority-opt').forEach(o=>o.classList.remove('selected'));
+  document.querySelectorAll('.dur-opt').forEach(o=>o.classList.remove('selected'));
+  buildAddDays();
+  updateAddProgress();
+}
+
+function buildAddDays() {
+  const scroll = document.getElementById('add-days');
+  scroll.innerHTML = '';
+  JOURS_S.forEach((j,i) => {
+    const el = document.createElement('div');
+    el.className = 'day-opt-add'+(i===addDay?' selected':'');
+    el.innerHTML = `<div class="don">${j}</div><div class="dod">${DATES[i]}</div>`;
+    el.onclick = () => {
+      document.querySelectorAll('.day-opt-add').forEach(d=>d.classList.remove('selected'));
+      el.classList.add('selected'); addDay=i; updateAddProgress();
+    };
+    scroll.appendChild(el);
+  });
+}
+
+function selType(el, type) {
+  document.querySelectorAll('.type-card').forEach(c=>c.className='type-card');
+  el.className = `type-card sel-${type}`; addType=type; updateAddProgress();
+}
+function selPriority(el, p) {
+  document.querySelectorAll('.priority-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected'); addPriority=p; updateAddProgress();
+}
+function selDuration(el, d) {
+  document.querySelectorAll('.dur-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected'); addDuration=d; updateAddProgress();
+}
+
+function updateAddProgress() {
+  const title = document.getElementById('add-title').value.trim();
+  let n = 0;
+  if (title) n++; if (addType) n++; if (addPriority) n++; if (addDuration) n++;
+  document.getElementById('add-progress').style.width = (n/4*100)+'%';
+  const btn = document.getElementById('add-submit-btn');
+  btn.disabled = n < 4;
+  btn.textContent = n<4 ? `✨ Encore ${4-n} champ${4-n>1?'s':''} à remplir` : '✨ Ajouter la tâche';
+}
+
+function submitTask() {
+  const title = document.getElementById('add-title').value.trim();
+  const notes = document.getElementById('add-notes').value.trim();
+  if (!title||!addType||!addPriority||!addDuration) {
+    document.getElementById('add-err').style.display='block'; return;
+  }
+  const task = {
+    id:'task_'+Date.now(), title, type:addType, priority:addPriority,
+    duration:addDuration, day:addDay, notes, emoji:EMOJIS[addType]||'📌',
+    done:false, createdAt:Date.now()
+  };
+  const users = getUsers();
+  const user  = getCurrentUser();
+  const idx   = users.findIndex(u=>u.email===user.email);
+  if (idx!==-1) {
+    if (!users[idx].tasks) users[idx].tasks=[];
+    users[idx].tasks.push(task);
+    saveUsers(users); setCurrentUser(users[idx]);
+  }
+  showToast('✓ Tâche ajoutée !');
+  setTimeout(() => showPage('dashboard'), 900);
+}
+
+// ══════════════════════════════════════════════════
+// PLANNING
+// ══════════════════════════════════════════════════
+let planningData = null;
+let planDay = todayIdx();
+let loadInterval = null;
+
+function initPlanning() {
+  const users = getUsers();
+  const user  = getCurrentUser();
+  if (!user) return;
+  const u = users.find(u=>u.email===user.email);
+  if (u?.lastPlanning) { planningData=u.lastPlanning; renderPlanResult(); }
+  else renderPlanEmpty();
+}
+
+function renderPlanEmpty() {
+  document.getElementById('regen-btn').style.display='none';
+  const tasks = getUserTasks();
+  const content = document.getElementById('planning-content');
+  if (!tasks.length) {
+    content.innerHTML = `<div class="empty-planning"><span class="ep-icon">📅</span><h3>Aucune tâche</h3><p>Ajoute des tâches depuis le dashboard d'abord.</p><button class="gold-btn" onclick="showPage('add-task')">➕ Ajouter des tâches</button></div>`;
+  } else {
+    content.innerHTML = `<div class="empty-planning"><span class="ep-icon">✨</span><h3>Prêt à générer</h3><p>Tu as <strong style="color:var(--gold)">${tasks.length} tâche${tasks.length>1?'s':''}</strong> cette semaine.<br>L'IA va créer ton planning optimal.</p><button class="gold-btn" onclick="generatePlanning()"><span>✨</span> Générer mon planning IA</button></div>`;
+  }
+}
+
+function renderPlanLoading() {
+  document.getElementById('regen-btn').style.display='none';
+  const msgs = ['Analyse de tes tâches...','Calcul des priorités...','Équilibrage...','Optimisation...','Finalisation...'];
+  let i=0;
+  document.getElementById('planning-content').innerHTML = `<div class="loading-state"><div class="spinner"></div><div class="loading-msg" id="plan-lmsg">${msgs[0]}</div><div class="loading-sub">Génération en cours...</div><div class="loading-dots"><span></span><span></span><span></span></div></div>`;
+  return setInterval(() => {
+    i=(i+1)%msgs.length;
+    const el=document.getElementById('plan-lmsg');
+    if(el) el.textContent=msgs[i];
+  }, 1200);
+}
+
+function renderPlanResult() {
+  const data = planningData;
+  document.getElementById('regen-btn').style.display='flex';
+  const content = document.getElementById('planning-content');
+  content.innerHTML = `
+    <div class="ia-card-plan">
+      <div class="card-label">✦ MESSAGE DE TON IA</div>
+      <div class="ia-msg" style="font-style:italic;line-height:1.7">"${data.message}"</div>
+    </div>
+    <div class="card">
+      <div class="card-label" style="margin-bottom:14px">⚖ ÉQUILIBRE</div>
+      <div class="score-row"><div class="score-lbl">SCOLAIRE</div><div class="score-track"><div class="score-fill" id="pf-sc" style="background:var(--gold-2);width:0%"></div></div><div class="score-val" style="color:var(--gold-2)">${data.score_equilibre?.scolaire||0}%</div></div>
+      <div class="score-row"><div class="score-lbl">PERSO</div><div class="score-track"><div class="score-fill" id="pf-pe" style="background:var(--gold);width:0%"></div></div><div class="score-val" style="color:var(--gold)">${data.score_equilibre?.perso||0}%</div></div>
+      <div class="score-row"><div class="score-lbl">REPOS</div><div class="score-track"><div class="score-fill" id="pf-re" style="background:var(--green);width:0%"></div></div><div class="score-val" style="color:var(--green)">${data.score_equilibre?.repos||0}%</div></div>
+    </div>
+    <div class="days-tabs-plan" id="plan-tabs"></div>
+    <div id="plan-day-content"></div>
+    <div class="conseil-card">
+      <span style="font-size:20px">💡</span>
+      <div>
+        <div style="font-size:10px;color:var(--gold-dark);font-family:'DM Mono',monospace;letter-spacing:2px;margin-bottom:5px">CONSEIL ANTI-PROCRASTINATION</div>
+        <div style="font-size:13px;color:var(--gold-muted);font-style:italic;line-height:1.6">${data.conseil}</div>
+      </div>
+    </div>`;
+  setTimeout(() => {
+    const se=data.score_equilibre||{};
+    const pf=document.getElementById('pf-sc'); if(pf) pf.style.width=(se.scolaire||0)+'%';
+    const pe=document.getElementById('pf-pe'); if(pe) pe.style.width=(se.perso||0)+'%';
+    const pr=document.getElementById('pf-re'); if(pr) pr.style.width=(se.repos||0)+'%';
+  },100);
+  buildPlanTabs();
+  renderPlanDay(planDay);
+}
+
+function buildPlanTabs() {
+  const container = document.getElementById('plan-tabs');
+  if (!container||!planningData) return;
+  container.innerHTML='';
+  JOURS.forEach((j,i) => {
+    const dayData = planningData.planning?.find(d=>d.jour===j);
+    const count = dayData?.taches?.length||0;
+    const tab = document.createElement('div');
+    tab.className='day-tab'+(i===planDay?' active':'');
+    tab.innerHTML=`<div class="dtn">${JOURS_S[i]}</div><div class="dtc">${count}</div><div class="dtd">${DATES[i]}</div>`;
+    tab.onclick=()=>{
+      planDay=i;
+      document.querySelectorAll('.day-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      renderPlanDay(i);
+    };
+    container.appendChild(tab);
+  });
+}
+
+function renderPlanDay(dayIdx) {
+  const container = document.getElementById('plan-day-content');
+  if (!container||!planningData) return;
+  const dayData = planningData.planning?.find(d=>d.jour===JOURS[dayIdx]);
+  const taches  = dayData?.taches||[];
+  let html = `<div class="card"><div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">${JOURS[dayIdx]}<span style="font-size:10px;color:var(--gold-dark);font-family:'DM Mono',monospace;font-weight:400">${DATES[dayIdx]} · ${taches.length} tâche${taches.length>1?'s':''}</span></div>`;
+  if (!taches.length) {
+    html += `<div style="text-align:center;padding:20px;color:var(--gold-dark);font-style:italic;font-size:13px">🌿 Journée libre !</div>`;
+  } else {
+    taches.forEach(t => {
+      html += `<div class="slot ${t.type}"><div class="slot-time">${t.heure}</div><span class="slot-emoji">${t.emoji}</span><div class="slot-info"><div class="slot-title ${t.type}">${t.titre}</div><div class="slot-meta">${t.duree} · ${t.type}</div></div></div>`;
+    });
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+async function generatePlanning() {
+  const tasks = getUserTasks();
+  if (!tasks.length) { renderPlanEmpty(); return; }
+  loadInterval = renderPlanLoading();
+  const tasksList = tasks.map(t=>`- ${t.title} | Type: ${t.type} | Priorité: ${t.priority} | Durée: ${t.duration} | Jour: ${JOURS[t.day]}`).join('\n');
+  const systemPrompt = `Tu es l'IA de "Find Your Time". Génère un planning 7 jours en JSON UNIQUEMENT:
+{"message":"string","score_equilibre":{"scolaire":number,"perso":number,"repos":number},"planning":[{"jour":"Lundi","taches":[{"heure":"09:00","duree":"1h","titre":"...","type":"scolaire|perso|repos","emoji":"..."}]}],"conseil":"string"}
+Règles: max 5 tâches/jour, max 6h travail/jour, scores totalisent 100, couvre les 7 jours.`;
+  try {
+    const res = await fetch('https://find-your-time.up.railway.app/generate-planning', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1000,
+        system:systemPrompt,
+        messages:[{role:'user',content:`Tâches:\n${tasksList}\n\nSemaine du ${DATES[0]} au ${DATES[6]}.`}]
+      })
+    });
+    clearInterval(loadInterval);
+    const data = await res.json();
+    const raw  = data.content?.map(b=>b.text||'').join('')||'{}';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    planningData = parsed;
+    saveUserData({lastPlanning:parsed, lastPlanningDate:Date.now()});
+    renderPlanResult();
+    showToast('✓ Planning généré !');
+  } catch(e) {
+    clearInterval(loadInterval);
+    renderPlanEmpty();
+    showToast('❌ Erreur — réessaie', true);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════
+(function() {
+  const user = getCurrentUser();
+  if (user) showPage('dashboard');
+})();
+
+// STREAKS & XP
+const BADGES=[
+  {id:"first_task",icon:"🌱",name:"Premier pas",desc:"1ere tache ajoutee",xp:10},
+  {id:"first_planning",icon:"🗓️",name:"Planificateur",desc:"1er planning genere",xp:25},
+  {id:"streak_3",icon:"🔥",name:"En feu",desc:"3 jours de streak",xp:30},
+  {id:"streak_7",icon:"⚡",name:"Electrique",desc:"7 jours de streak",xp:50},
+  {id:"tasks_5",icon:"💪",name:"Productif",desc:"5 taches completees",xp:35},
+  {id:"tasks_10",icon:"🚀",name:"Machine",desc:"10 taches completees",xp:50},
+  {id:"perfect_week",icon:"👑",name:"Semaine parfaite",desc:"100% taches completees",xp:100},
+  {id:"early_bird",icon:"🌅",name:"Leve-tot",desc:"Connexion avant 8h",xp:20},
+  {id:"night_owl",icon:"🦉",name:"Oiseau de nuit",desc:"Connexion apres 22h",xp:20},
+];
+const LEVELS=["Debutant","Apprenti","Organise","Expert","Maitre du temps","Legende"];
+
+function getXPData(){return JSON.parse(localStorage.getItem("fyt_xp")||'{"xp":0,"level":1,"unlockedBadges":[]}');}
+function saveXPData(d){localStorage.setItem("fyt_xp",JSON.stringify(d));}
+
+function addXP(amount){
+  const d=getXPData();
+  d.xp+=amount;
+  const newLevel=Math.floor(d.xp/100)+1;
+  if(newLevel>d.level){d.level=newLevel;showToast("🎉 Niveau "+newLevel+" atteint !");}
+  saveXPData(d);
+  checkBadges();
+}
+
+function checkBadges(){
+  const d=getXPData();
+  const tasks=getUserTasks();
+  const done=tasks.filter(t=>t.done).length;
+  const streak=parseInt(localStorage.getItem("fyt_streak")||"0");
+  const h=new Date().getHours();
+  const checks={
+    first_task:tasks.length>=1,
+    first_planning:!!(getUsers().find(u=>u.email===getCurrentUser()?.email)?.lastPlanning),
+    streak_3:streak>=3,
+    streak_7:streak>=7,
+    tasks_5:done>=5,
+    tasks_10:done>=10,
+    perfect_week:tasks.length>0&&done===tasks.length,
+    early_bird:h<8,
+    night_owl:h>=22,
+  };
+  let newBadge=false;
+  BADGES.forEach(b=>{
+    if(checks[b.id]&&!d.unlockedBadges.includes(b.id)){
+      d.unlockedBadges.push(b.id);
+      newBadge=true;
+      setTimeout(()=>showToast("🏆 Badge debloque : "+b.name+" !"),500);
+    }
+  });
+  if(newBadge)saveXPData(d);
+}
+
+function updateStreak(){
+  const lastDate=localStorage.getItem("fyt_last_active");
+  const today=new Date().toDateString();
+  let streak=parseInt(localStorage.getItem("fyt_streak")||"0");
+  if(lastDate===today)return;
+  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  if(lastDate===yesterday.toDateString()){streak++;}
+  else if(!lastDate){streak=1;}
+  else{streak=1;}
+  localStorage.setItem("fyt_streak",streak);
+  localStorage.setItem("fyt_last_active",today);
+  if(streak>0)addXP(10);
+}
+
+function initStreaks(){
+  updateStreak();
+  checkBadges();
+  const d=getXPData();
+  const xpInLevel=d.xp%100;
+  const streak=parseInt(localStorage.getItem("fyt_streak")||"0");
+  document.getElementById("streak-count").textContent=streak;
+  document.getElementById("streak-xp").textContent=d.xp+" XP";
+  document.getElementById("xp-fill").style.width=xpInLevel+"%";
+  document.getElementById("streak-level").textContent="Niveau "+d.level+" — "+(LEVELS[Math.min(d.level-1,LEVELS.length-1)]);
+  document.getElementById("streak-next").textContent=(100-xpInLevel)+" XP pour le niveau "+(d.level+1);
+  renderBadges(d.unlockedBadges);
+}
+
+function renderBadges(unlocked){
+  const grid=document.getElementById("badges-grid");
+  if(!grid)return;
+  grid.innerHTML="";
+  BADGES.forEach(b=>{
+    const isUnlocked=unlocked.includes(b.id);
+    const el=document.createElement("div");
+    el.className="badge-card "+(isUnlocked?"unlocked":"locked");
+    el.innerHTML="<span class=\"badge-icon\">"+b.icon+"</span><div class=\"badge-name\">"+b.name+"</div><div class=\"badge-desc\">"+b.desc+"</div>";
+    grid.appendChild(el);
+  });
+}
+
+// JOURNAL
+function initJournal(){
+  const tasks=getUserTasks();
+  const done=tasks.filter(t=>t.done).length;
+  const rate=tasks.length?Math.round((done/tasks.length)*100):0;
+  document.getElementById("j-tasks").textContent=tasks.length;
+  document.getElementById("j-done").textContent=done;
+  document.getElementById("j-rate").textContent=rate+"%";
+  renderJournalHistory();
+}
+
+async function generateJournal(){
+  const tasks=getUserTasks();
+  const done=tasks.filter(t=>t.done).length;
+  const total=tasks.length;
+  const rate=total?Math.round((done/total)*100):0;
+  const btn=document.getElementById("journal-btn");
+  btn.textContent="⏳ Generation en cours...";
+  btn.disabled=true;
+  try{
+    const res=await fetch("https://find-your-time.up.railway.app/generate-planning",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        tasks:[{title:"bilan semaine",type:"scolaire",priority:"normal",duration:"1h",day:"Lundi"}],
+        dates:["bilan","","","","","",""],
+        bilan:true,
+        stats:{total,done,rate}
+      })
+    });
+    const data=await res.json();
+    const bilan=data.message||"Super semaine ! Continue comme ca.";
+    document.getElementById("journal-bilan").textContent=bilan;
+    const history=JSON.parse(localStorage.getItem("fyt_journal")||"[]");
+    const today=new Date().toLocaleDateString("fr-FR");
+    history.unshift({date:today,bilan,total,done,rate});
+    if(history.length>10)history.pop();
+    localStorage.setItem("fyt_journal",JSON.stringify(history));
+    renderJournalHistory();
+    addXP(15);
+    showToast("✓ Bilan genere ! +15 XP");
+  }catch(e){
+    document.getElementById("journal-bilan").textContent="Super semaine ! Tu as bien travaille cette semaine. Continue sur cette lancee !";
+    showToast("Bilan genere !");
+  }
+  btn.textContent="✨ Regenrer mon bilan";
+  btn.disabled=false;
+}
+
+function renderJournalHistory(){
+  const history=JSON.parse(localStorage.getItem("fyt_journal")||"[]");
+  const container=document.getElementById("journal-history");
+  if(!container)return;
+  if(!history.length){container.innerHTML="<div style=\"color:var(--gold-dark);font-style:italic;font-size:13px;text-align:center;padding:16px\">Aucun bilan pour linstant.</div>";return;}
+  container.innerHTML="";
+  history.forEach(h=>{
+    const el=document.createElement("div");
+    el.style.cssText="padding:12px;border-bottom:1px solid var(--border);";
+    el.innerHTML="<div style=\"font-size:10px;color:var(--gold-dark);font-family:DM Mono,monospace;margin-bottom:4px\">"+h.date+" · "+h.total+" taches · "+h.done+" faites · "+h.rate+"%</div><div style=\"font-size:13px;color:var(--text);font-style:italic;line-height:1.5\">"+h.bilan+"</div>";
+    container.appendChild(el);
+  });
+}
+
+// MOOD TRACKER
+let selectedMood=null;
+
+function initMood(){
+  selectedMood=null;
+  document.querySelectorAll(".mood-opt").forEach(o=>o.classList.remove("selected"));
+  const btn=document.getElementById("mood-save-btn");
+  if(btn)btn.disabled=true;
+  const card=document.getElementById("mood-conseil-card");
+  if(card)card.style.display="none";
+  renderMoodHistory();
+  // Affiche humeur deja sauvee aujourd hui
+  const today=new Date().toLocaleDateString("fr-FR");
+  const moods=JSON.parse(localStorage.getItem("fyt_moods")||"[]");
+  const todayMood=moods.find(m=>m.date===today);
+  if(todayMood){
+    showMoodAdvice(todayMood);
+  }
+}
+
+function selectMood(el,emoji,label){
+  document.querySelectorAll(".mood-opt").forEach(o=>o.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedMood={emoji,label};
+  const btn=document.getElementById("mood-save-btn");
+  if(btn)btn.disabled=false;
+}
+
+function saveMood(){
+  if(!selectedMood)return;
+  const today=new Date().toLocaleDateString("fr-FR");
+  const moods=JSON.parse(localStorage.getItem("fyt_moods")||"[]");
+  const existing=moods.findIndex(m=>m.date===today);
+  if(existing>=0)moods.splice(existing,1);
+  moods.unshift({date:today,emoji:selectedMood.emoji,label:selectedMood.label});
+  if(moods.length>30)moods.pop();
+  localStorage.setItem("fyt_moods",JSON.stringify(moods));
+  showMoodAdvice(selectedMood);
+  renderMoodHistory();
+  addXP(5);
+  showToast("✓ Humeur sauvegardee ! +5 XP");
+  checkBadges();
+}
+
+function showMoodAdvice(mood){
+  const advices={
+    "😴":"Tu es epuise. Commence par les taches les plus courtes et accorde-toi des pauses.",
+    "😔":"Journee difficile. Concentre-toi sur 1-2 taches importantes et menage-toi.",
+    "😐":"Journee normale. Suis ton planning habituel, tu peux tout accomplir.",
+    "😊":"Tu es de bonne humeur ! Profites-en pour avancer sur tes projets.",
+    "🔥":"Tu es en feu ! Lance-toi sur tes taches les plus difficiles maintenant."
+  };
+  const card=document.getElementById("mood-conseil-card");
+  const conseil=document.getElementById("mood-conseil");
+  if(card&&conseil){
+    conseil.textContent=advices[mood.emoji]||"Bonne journee !";
+    card.style.display="block";
+  }
+}
+
+function renderMoodHistory(){
+  const moods=JSON.parse(localStorage.getItem("fyt_moods")||"[]");
+  const container=document.getElementById("mood-history");
+  if(!container)return;
+  if(!moods.length){
+    container.innerHTML="<div style=\"color:var(--gold-dark);font-style:italic;font-size:12px\">Pas encore d historique</div>";
+    return;
+  }
+  container.innerHTML="";
+  moods.slice(0,7).forEach(m=>{
+    const el=document.createElement("div");
+    el.className="mood-day";
+    el.innerHTML="<span class=\"mood-day-emoji\">"+m.emoji+"</span><span class=\"mood-day-date\">"+m.date.split("/").slice(0,2).join("/")+"</span>";
+    container.appendChild(el);
+  });
+}
+
+// MODE FOCUS
+let focusInterval=null, focusRunning=false, focusBreak=false;
+let focusTotal=25*60, focusRemaining=25*60, focusSessions=0;
+let selectedFocusTask=null;
+
+function initFocus(){
+  focusRunning=false;
+  clearInterval(focusInterval);
+  focusTotal=25*60;
+  focusRemaining=25*60;
+  focusBreak=false;
+  focusSessions=parseInt(localStorage.getItem("fyt_focus_sessions")||"0");
+  const el=document.getElementById("focus-sessions");
+  if(el)el.textContent=focusSessions;
+  updateFocusUI();
+  renderFocusTasks();
+}
+
+function updateFocusUI(){
+  const min=Math.floor(focusRemaining/60);
+  const sec=focusRemaining%60;
+  const timerEl=document.getElementById("focus-timer");
+  if(timerEl)timerEl.textContent=String(min).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+  const circle=document.getElementById("focus-svg-circle");
+  if(circle){
+    const pct=focusRemaining/focusTotal;
+    circle.style.strokeDashoffset=(603*(1-pct));
+    circle.style.stroke=focusBreak?"#4a9660":"#ffd700";
+  }
+  const fc=document.getElementById("focus-circle");
+  if(fc)fc.className="focus-circle"+(focusRunning?(focusBreak?" break":" running"):"");
+  const btn=document.getElementById("focus-main-btn");
+  if(btn)btn.textContent=focusRunning?"⏸ Pause":"▶ "+(focusBreak?"Pause":"Focus");
+  const lbl=document.getElementById("focus-mode-label");
+  if(lbl)lbl.textContent=focusBreak?"PAUSE · 5 MIN":"FOCUS · 25 MIN";
+  const sub=document.getElementById("focus-sublabel");
+  if(sub)sub.textContent=focusRunning?(focusBreak?"Repose-toi !":"Concentre-toi !"):"Appuie pour demarrer";
+  const dots=document.querySelectorAll(".pom-dot");
+  dots.forEach((d,i)=>d.classList.toggle("done",i<(focusSessions%4)));
+}
+
+function toggleFocus(){
+  if(focusRunning){
+    clearInterval(focusInterval);
+    focusRunning=false;
+    updateFocusUI();
+    return;
+  }
+  focusRunning=true;
+  updateFocusUI();
+  focusInterval=setInterval(function(){
+    focusRemaining--;
+    if(focusRemaining<=0){
+      clearInterval(focusInterval);
+      focusRunning=false;
+      if(!focusBreak){
+        focusSessions++;
+        localStorage.setItem("fyt_focus_sessions",focusSessions);
+        const el=document.getElementById("focus-sessions");
+        if(el)el.textContent=focusSessions;
+        addXP(25);
+        showToast("🎉 Session focus terminee ! +25 XP");
+        focusBreak=true;
+        focusTotal=5*60;
+        focusRemaining=5*60;
+      } else {
+        focusBreak=false;
+        focusTotal=25*60;
+        focusRemaining=25*60;
+        showToast("😊 Pause terminee ! Pret pour une nouvelle session ?");
+      }
+    }
+    updateFocusUI();
+  },1000);
+}
+
+function resetFocus(){
+  clearInterval(focusInterval);
+  focusRunning=false;
+  focusBreak=false;
+  focusTotal=25*60;
+  focusRemaining=25*60;
+  updateFocusUI();
+}
+
+function renderFocusTasks(){
+  const tasks=getUserTasks().filter(t=>!t.done);
+  const list=document.getElementById("focus-tasks-list");
+  if(!list)return;
+  if(!tasks.length){
+    list.innerHTML="<div style=\"color:var(--gold-dark);font-style:italic;font-size:13px;text-align:center;padding:12px\">Aucune tache en cours</div>";
+    return;
+  }
+  list.innerHTML="";
+  tasks.forEach(t=>{
+    const el=document.createElement("div");
+    el.className="task-item "+t.type;
+    const selected=selectedFocusTask&&selectedFocusTask.id===t.id;
+    if(selected)el.style.borderColor="var(--gold)";
+    el.innerHTML="<div class=\"task-dot "+t.type+"\"></div><div class=\"task-info\"><div class=\"task-title\">"+t.emoji+" "+t.title+"</div><div class=\"task-meta\">"+t.priority+" · "+t.duration+"</div></div>"+(selected?"<span style=\"color:var(--gold);font-size:16px\">✓</span>":"");
+    el.onclick=function(){
+      selectedFocusTask=t;
+      const ttl=document.getElementById("focus-task-title");
+      const meta=document.getElementById("focus-task-meta");
+      if(ttl)ttl.textContent=t.title;
+      if(meta)meta.textContent=t.priority+" · "+t.duration;
+      renderFocusTasks();
+    };
+    list.appendChild(el);
+  });
+}
+</script>
+
+<!-- STREAKS -->
+<div class="page" id="page-streaks">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" onclick="showPage('dashboard')">← Retour</button>
+      <span class="topbar-title">Mes Succès</span>
+    </div>
+  </div>
+  <div class="wrap" style="padding-top:0">
+    <div class="streak-hero">
+      <span class="streak-fire">🔥</span>
+      <div class="streak-count" id="streak-count">0</div>
+      <div class="streak-label">JOURS DE STREAK</div>
+    </div>
+    <div class="xp-bar-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div style="font-size:13px;font-weight:700;color:var(--gold)" id="streak-level">Niveau 1 — Debutant</div>
+        <div style="font-size:11px;color:var(--gold-dark);font-family:DM Mono,monospace" id="streak-xp">0 XP</div>
+      </div>
+      <div class="xp-bar-track"><div class="xp-bar-fill" id="xp-fill" style="width:0%"></div></div>
+      <div style="font-size:10px;color:var(--gold-dark);font-family:DM Mono,monospace" id="streak-next">100 XP pour le niveau 2</div>
+    </div>
+    <div class="card-label" style="padding:0 4px;margin-bottom:10px">🏆 MES BADGES</div>
+    <div class="badges-grid" id="badges-grid"></div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showPage('dashboard')"><span>🏠</span><span>Accueil</span></div>
+    <div class="nav-item" onclick="showPage('add-task')"><span>➕</span><span>Tâche</span></div>
+    <div class="nav-item" onclick="showPage('planning')"><span>📅</span><span>Planning</span></div>
+    <div class="nav-item active"><span>🏆</span><span>Succès</span></div>
+  </div>
+</div>
+
+<!-- JOURNAL -->
+<div class="page" id="page-journal">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" onclick="showPage('dashboard')">← Retour</button>
+      <span class="topbar-title">Mon Journal</span>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="journal-stat-grid">
+      <div class="journal-stat"><div class="journal-stat-num" id="j-tasks">0</div><div class="journal-stat-lbl">TACHES</div></div>
+      <div class="journal-stat"><div class="journal-stat-num" id="j-done" style="color:var(--green)">0</div><div class="journal-stat-lbl">FAITES</div></div>
+      <div class="journal-stat"><div class="journal-stat-num" id="j-rate" style="color:var(--gold-2)">0%</div><div class="journal-stat-lbl">TAUX</div></div>
+    </div>
+    <div class="journal-bilan-card">
+      <div class="card-label">✦ BILAN IA DE LA SEMAINE</div>
+      <div id="journal-bilan" style="font-size:14px;font-style:italic;line-height:1.8;color:var(--text)">
+        Clique sur "Generer mon bilan" pour que l IA analyse ta semaine.
+      </div>
+    </div>
+    <button class="gold-btn" onclick="generateJournal()" id="journal-btn">✨ Generer mon bilan IA</button>
+    <div class="card" style="margin-top:14px">
+      <div class="card-label">📅 HISTORIQUE</div>
+      <div id="journal-history" style="color:var(--gold-dark);font-style:italic;font-size:13px;text-align:center;padding:16px">Aucun bilan pour linstant.</div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showPage('dashboard')"><span>🏠</span><span>Accueil</span></div>
+    <div class="nav-item" onclick="showPage('add-task')"><span>➕</span><span>Tâche</span></div>
+    <div class="nav-item" onclick="showPage('planning')"><span>📅</span><span>Planning</span></div>
+    <div class="nav-item active"><span>📓</span><span>Journal</span></div>
+  </div>
+</div>
+
+<!-- MOOD TRACKER -->
+<div class="page" id="page-mood">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" onclick="showPage('dashboard')">← Retour</button>
+      <span class="topbar-title">Mon Humeur</span>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="card" style="text-align:center;padding:20px">
+      <div style="font-size:22px;font-weight:700;color:var(--gold);margin-bottom:4px">Comment tu te sens ?</div>
+      <div style="font-size:13px;color:var(--gold-dark);font-style:italic;margin-bottom:20px">L IA adaptera tes conseils selon ton humeur</div>
+      <div class="mood-grid">
+        <div class="mood-opt" onclick="selectMood(this,'😴','Epuise')"><span class="mood-emoji">😴</span><span class="mood-label">EPUISE</span></div>
+        <div class="mood-opt" onclick="selectMood(this,'😔','Pas top')"><span class="mood-emoji">😔</span><span class="mood-label">PAS TOP</span></div>
+        <div class="mood-opt" onclick="selectMood(this,'😐','Normal')"><span class="mood-emoji">😐</span><span class="mood-label">NORMAL</span></div>
+        <div class="mood-opt" onclick="selectMood(this,'😊','Bien')"><span class="mood-emoji">😊</span><span class="mood-label">BIEN</span></div>
+        <div class="mood-opt" onclick="selectMood(this,'🔥','Motive')"><span class="mood-emoji">🔥</span><span class="mood-label">MOTIVE</span></div>
+      </div>
+      <button class="gold-btn" id="mood-save-btn" onclick="saveMood()" disabled>Sauvegarder mon humeur</button>
+    </div>
+    <div class="card">
+      <div class="card-label">📊 MES 7 DERNIERS JOURS</div>
+      <div class="mood-history" id="mood-history"></div>
+    </div>
+    <div class="card" id="mood-conseil-card" style="display:none">
+      <div class="card-label">🤖 CONSEIL DU JOUR</div>
+      <div id="mood-conseil" style="font-size:14px;font-style:italic;color:var(--text);line-height:1.7"></div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showPage('dashboard')"><span>🏠</span><span>Accueil</span></div>
+    <div class="nav-item" onclick="showPage('add-task')"><span>➕</span><span>Tâche</span></div>
+    <div class="nav-item" onclick="showPage('planning')"><span>📅</span><span>Planning</span></div>
+    <div class="nav-item active"><span>😊</span><span>Humeur</span></div>
+  </div>
+</div>
+
+<!-- FOCUS MODE -->
+<div class="page" id="page-focus">
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="back-btn" onclick="showPage('dashboard')">← Retour</button>
+      <span class="topbar-title">Mode Focus</span>
+    </div>
+  </div>
+  <div class="wrap" style="padding-top:0">
+    <div style="text-align:center;padding:20px 0 10px">
+      <div class="card-label" id="focus-mode-label" style="margin-bottom:16px">FOCUS · 25 MIN</div>
+      <div class="focus-circle" id="focus-circle" onclick="toggleFocus()">
+        <svg style="position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)">
+          <circle cx="100" cy="100" r="96" fill="none" stroke="rgba(200,150,0,0.1)" stroke-width="3"/>
+          <circle cx="100" cy="100" r="96" fill="none" stroke="#ffd700" stroke-width="3"
+            stroke-dasharray="603" id="focus-svg-circle"
+            stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear"/>
+        </svg>
+        <div class="focus-time" id="focus-timer">25:00</div>
+        <div class="focus-label" id="focus-sublabel">Appuie pour demarrer</div>
+      </div>
+      <div class="pom-dots" id="pom-dots">
+        <div class="pom-dot"></div><div class="pom-dot"></div>
+        <div class="pom-dot"></div><div class="pom-dot"></div>
+      </div>
+    </div>
+    <div class="card" id="focus-current-task">
+      <div class="card-label">🎯 TACHE EN COURS</div>
+      <div id="focus-task-title" style="font-size:16px;font-weight:700;color:var(--gold)">Aucune tache selectionnee</div>
+      <div id="focus-task-meta" style="font-size:11px;color:var(--gold-dark);font-family:DM Mono,monospace;margin-top:4px"></div>
+    </div>
+    <div class="focus-controls">
+      <button class="focus-btn focus-btn-primary" id="focus-main-btn" onclick="toggleFocus()">▶ Demarrer</button>
+      <button class="focus-btn focus-btn-secondary" onclick="resetFocus()">↺ Reset</button>
+    </div>
+    <div class="card">
+      <div class="card-label">📋 CHOISIR UNE TACHE</div>
+      <div id="focus-tasks-list"></div>
+    </div>
+    <div class="card" style="background:rgba(200,150,0,0.05)">
+      <div class="card-label">⚡ SESSIONS AUJOURD HUI</div>
+      <div id="focus-sessions" style="font-size:28px;font-weight:700;color:var(--gold);text-align:center;padding:8px">0</div>
+      <div style="font-size:11px;color:var(--gold-dark);font-family:DM Mono,monospace;text-align:center">sessions completees</div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showPage('dashboard')"><span>🏠</span><span>Accueil</span></div>
+    <div class="nav-item" onclick="showPage('add-task')"><span>➕</span><span>Tâche</span></div>
+    <div class="nav-item" onclick="showPage('planning')"><span>📅</span><span>Planning</span></div>
+    <div class="nav-item active"><span>⏱️</span><span>Focus</span></div>
+  </div>
+</div>
+</body>
+</html>
